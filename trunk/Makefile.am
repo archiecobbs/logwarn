@@ -1,0 +1,39 @@
+#
+# Logwarn - Utility for finding interesting messages in log files
+#
+# Copyright (C) 2010 Archie L. Cobbs. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# $Id$
+#
+
+bin_PROGRAMS=		logwarn
+
+noinst_HEADERS=		logwarn.h
+
+man_MANS=		logwarn.1
+
+docdir=			$(datadir)/doc/packages/$(PACKAGE)
+
+doc_DATA=		CHANGES COPYING README INSTALL
+
+EXTRA_DIST=		CHANGES logwarn.1 logwarn.spec
+
+logwarn_SOURCES=	main.c \
+			state.c \
+			svnrev.c
+
+svnrev.c:
+			printf 'const char logwarn_svnrev[] = "%s";\n' `svnversion -n` > svnrev.c
+

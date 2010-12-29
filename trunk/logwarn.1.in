@@ -1,0 +1,171 @@
+.\"  -*- nroff -*-
+.\"
+.\" Logwarn - Utility for finding interesting messages in log files
+.\"
+.\" Copyright (C) 2010 Archie L. Cobbs. All rights reserved.
+.\"
+.\" Licensed under the Apache License, Version 2.0 (the "License");
+.\" you may not use this file except in compliance with the License.
+.\" You may obtain a copy of the License at
+.\"
+.\"     http://www.apache.org/licenses/LICENSE-2.0
+.\"
+.\" Unless required by applicable law or agreed to in writing, software
+.\" distributed under the License is distributed on an "AS IS" BASIS,
+.\" WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+.\" See the License for the specific language governing permissions and
+.\" limitations under the License.
+.\"
+.\" $Id$
+.\"
+.Dd December 28, 2010
+.Dt LOGWARN 1
+.Os
+.Sh NAME
+.Nm logwarn
+.Nd utility for finding interesting messages in log files
+.Sh SYNOPSIS
+.Nm logwarn
+.Bk -words
+.Op Fl d Ar dir
+.Op Fl m Ar firstpat
+.Op Fl r Ar sufpat
+.Op Fl n
+.Ar logfile
+.Ar [!]pattern ...
+.Ek
+.Pp
+.Nm logwarn
+.Bk -words
+.Op Fl i
+.Op Fl d dir
+.Ar logfile
+.Ek
+.Sh DESCRIPTION
+.Nm
+searches for interesting messages in log files, where ``interesting''
+is defined by an
+user-supplied list of positive and negative (preceeded with a ``!'') extended regular expressions
+provided on the command line.
+.Pp
+Each log message is compared against each
+.Ar pattern
+in the order given.
+If the log message matches a positive
+.Ar pattern
+before matching a negative
+.Ar !pattern
+then it's printed to standard output.
+.Pp
+.Nm
+keeps track of its position between invocations, so each matching line is only ever output once.
+It also finds messages in log files that have been rotated (and possibly compressed)
+since the previous invocation.
+.Pp
+.Nm
+also includes support for log messages that span multiple lines.
+.Sh OPTIONS
+.Bl -tag -width Ds
+.It Fl d
+Specify
+.Ar dir
+as the directory in which
+.Nm
+will store state information between invocations.
+.Pp
+The default state directory is
+.Pa @DEFAULT_CACHE_DIR@ .
+.It Fl h
+Output help message and exit.
+.It Fl i
+Initialize the saved state for
+.Ar logfile
+as `up to date'.
+This causes the next invocation to start its scan at the current
+(as of this invocation) end of
+.Ar logfile .
+.It Fl m
+Enable multi-line support.
+.Pp
+Without this flag, each line in
+.Ar logfile
+is considered a separate log message.
+With this flag, each line in
+.Ar logfile
+is matched against the extended regular expression
+.Ar firstpat ;
+non-matching lines are considered continuations of the previous line.
+.It Fl n
+Normally, if the
+.Ar logfile
+does not exist,
+.Nm
+will exit with an error.
+This flag causes
+.Nm
+to treat a non-existent
+.Ar logfile
+as if it were empty.
+.It Fl q
+Disable the printing of matching log messages to standard output.
+The process exit value can still be used to detect whether there were any matches (see below).
+.It Fl r
+Make
+the extended regular expression
+.Ar sufpat
+the rotated log file suffix pattern.
+.Pp
+When
+.Nm
+detects that a log file has been rotated, it searches for the rotated log file by finding
+files in the same directory that have the same name as
+.Ar logfile
+plus a suffix matching the rotated log file suffix pattern
+(if multiple files match, the first one in sorting order is picked).
+.Pp
+The default rotated log file suffix pattern is
+.Pa ^(-[[:digit:]]{8}|\e\.[01])(\e\.(gz|bz2))?$
+.It Fl v
+Output version information and exit.
+.El
+.Sh CAVEATS
+Log file rotation is detected by comparing filesystem inode numbers, so
+.Nm
+may exhibit incorrect behavior if (for example) an existing log file is replaced by a copy of itself.
+In this situation, use the
+.Fl i
+flag to reinitialize the saved state.
+.Pp
+Currently, the supported compression types for rotated files are
+.Xr gzip 1
+and
+.Xr bzip2 1 .
+The corresponding executables
+.Xr gunzip 1
+and
+.Xr bunzip2 1
+must be present on the user's
+.Pa $PATH .
+.Pp
+The state files in the state directory have names created by taking the
+.Ar logfile
+from the command line and replacing ``/'' characters with ``_''.
+Referring to the same file using different pathnames can result in inconsistent behavior.
+.Sh RETURN VALUES
+.Nm
+exits with one of the following values:
+.Bl -tag -width Ds
+.It 0
+No matching log messages were found.
+.It 1
+One or more matching log messages were found.
+.It 2
+An error occurred.
+.El
+.Sh SEE ALSO
+.Rs
+.%T "Logwarn: Utility for finding interesting messages in log files"
+.%O http://logwarn.googlecode.com/
+.Re
+.Sh AUTHOR
+.An Archie L. Cobbs Aq archie@dellroad.org
