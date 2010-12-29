@@ -54,8 +54,8 @@ in the order given.
 If the log message matches a positive
 .Ar pattern
 before matching a negative
-.Ar !pattern
-then it's printed to standard output.
+.Ar !pattern ,
+or if none of the patterns match, then it's printed to standard output.
 .Pp
 .Nm
 keeps track of its position between invocations, so each matching line is only ever output once.
@@ -158,6 +158,9 @@ The state files in the state directory have names created by taking the
 .Ar logfile
 from the command line and replacing ``/'' characters with ``_''.
 Referring to the same file using different pathnames can result in inconsistent behavior.
+.Pp
+The matching patterns are only applied to the first line of a multi-line log message.
+However, when there is a match, all log message lines will be output.
 .Sh RETURN VALUES
 .Nm
 exits with one of the following values:
