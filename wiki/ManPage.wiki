@@ -38,6 +38,10 @@ OPTIONS
      -i      Initialize the saved state for logfile as `up to date'.  This causes the next invoca-
              tion to start its scan at the current (as of this invocation) end of logfile.
 
+             This behavior is also implied when no state file for logfile exists, so that logwarn is
+             effectively self-initializing (and nothing will output) when run for the first time on
+             logfile.
+
      -m      Enable multi-line support.
 
              Without this flag, each line in logfile is considered a separate log message.  With
