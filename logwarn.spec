@@ -74,6 +74,7 @@ Requires:       logwarn >= %{version}
 A Nagios plugin based on the logwarn(1) utility.
 
 %files nagios-plugin
-%attr(0755,root,root) %{_prefix}/lib/nagios/plugins/*
+%defattr(0755,root,root,0755)
+%attr(0755,root,root) %{_prefix}/lib/nagios
 
 %changelog
