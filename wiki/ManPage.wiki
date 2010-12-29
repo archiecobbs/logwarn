@@ -13,7 +13,7 @@ SYNOPSIS
      logwarn [-i] [-d -dir] logfile
 
 DESCRIPTION
-     logwarn searches for interesting messages in log files, where ``interesting'' is defined by an
+     logwarn searches for interesting messages in log files, where ``interesting`'``'` is defined by an
      user-supplied list of positive and negative (preceeded with a ``!'') extended regular expres-
      sions provided on the command line.
 
