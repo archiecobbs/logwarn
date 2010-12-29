@@ -28,7 +28,11 @@ docdir=			$(datadir)/doc/packages/$(PACKAGE)
 
 doc_DATA=		CHANGES COPYING README INSTALL
 
-EXTRA_DIST=		CHANGES logwarn.1 logwarn.spec
+plugindir=		$(prefix)/lib/nagios/plugins
+
+plugin_SCRIPTS=		check_logwarn
+
+EXTRA_DIST=		CHANGES logwarn.1 logwarn.spec check_logwarn
 
 logwarn_SOURCES=	main.c \
 			state.c \

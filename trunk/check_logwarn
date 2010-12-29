@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Constants
+NAME="check_logwarn"
+STATE_OK=0
+STATE_WARNING=1
+STATE_CRITICAL=2
+STATE_UNKNOWN=3
+
+# We want to get the error result of logwarn(1), not sed(1), so set "pipefail" bash option
+set -o pipefail
+
+# Run logwarn and grab a sample of the first line matched (up to 80 chars)
+LOG_MESSAGE=`logwarn ${1+"$@"} 2>&1 | head -1 | sed -r 's/^(.{77}).+$/\1.../g'`
+
+# Output result based on exit value from logwarn(1)
+case $? in
+    0)
+        echo "OK - No log errors found|${LOG_MESSAGE}"
+        exit ${STATE_OK}
+        ;;
+    1)
+        echo "WARNING - Log errors found|${LOG_MESSAGE}"
+        exit ${STATE_WARNING}
+        ;;
+    *)
+        echo "UNKNOWN - Program error|${LOG_MESSAGE}"
+        exit ${STATE_UNKNOWN}
+        ;;
+esac
+

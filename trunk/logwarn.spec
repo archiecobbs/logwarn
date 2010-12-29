@@ -19,7 +19,7 @@
 #
 
 Name:           logwarn
-Version:        1.0
+Version:        1.0.1
 Release:        1
 License:        Apache License, Version 2.0
 Summary:        Utility for finding interesting messages in log files
@@ -63,5 +63,17 @@ rm -rf ${RPM_BUILD_ROOT}
 %attr(0644,root,root) %{_mandir}/man1/%{name}.1.gz
 %defattr(0644,root,root,0755)
 %doc %{_datadir}/doc/packages/%{name}
+
+%package nagios-plugin
+Summary:        Nagios plugin based on the logwarn(1) utility
+Group:          System/Utilities
+Requires:       bash
+Requires:       logwarn >= %{version}
+
+%description nagios-plugin
+A Nagios plugin based on the logwarn(1) utility.
+
+%files nagios-plugin
+%attr(0755,root,root) %{_prefix}/lib/nagios/plugins/*
 
 %changelog
