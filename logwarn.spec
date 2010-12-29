@@ -57,11 +57,13 @@ make
 %install
 rm -rf ${RPM_BUILD_ROOT}
 %{makeinstall}
+install -d ${RPM_BUILD_ROOT}%{_var}/lib/%{name}
 
 %files
 %attr(0755,root,root) %{_bindir}/%{name}
 %attr(0644,root,root) %{_mandir}/man1/%{name}.1.gz
 %defattr(0644,root,root,0755)
+%{_var}/lib/%{name}
 %doc %{_datadir}/doc/packages/%{name}
 
 %package nagios-plugin
