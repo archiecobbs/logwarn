@@ -71,6 +71,7 @@ Summary:        Nagios plugin based on the logwarn(1) utility
 Group:          System/Utilities
 Requires:       bash
 Requires:       logwarn >= %{version}
+Buildarch:      noarch
 
 %description nagios-plugin
 A Nagios plugin based on the logwarn(1) utility.
