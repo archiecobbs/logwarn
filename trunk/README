@@ -1,18 +1,21 @@
 
 Logwarn - Utility for finding interesting messages in log files
 
-Logwarn searches for "interesting" messages in log files, where "interesting"
-is defined in terms of positive and negative regular expressions.
+Logwarn searches for interesting messages in log files, where
+``interesting'' is defined by a user-supplied list of positive and
+negative extended regular expressions provided on the command line.
 
-Logwarn has the following features:
+Each log message is compared against each pattern in the order given. If
+the log message matches a positive pattern before matching a negative
+pattern then it's printed to standard output.
 
-    * Regular expressions rules define which lines to include and which
-      to exclude, with user-defined rule ordering
-    * State is maintained between invocations, so only new log lines are scanned
-    * Correct handling of multi-line log messages
-    * Tracking of log files that have been rotated, even when the rotated
-      log file is compressed
-    * Written in C for efficient execution 
+Logwarn keeps track of its position between invocations, so each matching
+line is only ever output once. It also finds messages in log files that
+have been rotated (and possibly compressed) since the previous invocation.
+
+Logwarn also includes support for log messages that span multiple lines.
+
+Logwarn is written in C for efficient execution.
 
 See INSTALL for installation instructions.
 
