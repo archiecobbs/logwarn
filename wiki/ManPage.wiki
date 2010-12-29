@@ -18,8 +18,8 @@ DESCRIPTION
      sions provided on the command line.
 
      Each log message is compared against each pattern in the order given.  If the log message
-     matches a positive pattern before matching a negative !pattern then it's printed to standard
-     output.
+     matches a positive pattern before matching a negative !pattern, or if none of the patterns
+     match, then it's printed to standard output.
 
      logwarn keeps track of its position between invocations, so each matching line is only ever
      output once.  It also finds messages in log files that have been rotated (and possibly com-
@@ -76,6 +76,9 @@ CAVEATS
      The state files in the state directory have names created by taking the logfile from the com-
      mand line and replacing ``/'' characters with ``_''.  Referring to the same file using differ-
      ent pathnames can result in inconsistent behavior.
+
+     The matching patterns are only applied to the first line of a multi-line log message.  However,
+     when there is a match, all log message lines will be output.
 
 RETURN VALUES
      logwarn exits with one of the following values:
