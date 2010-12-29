@@ -1,0 +1,92 @@
+#summary Wikified version of the logwarn man page
+#labels Featured
+
+{{{
+LOGWARN(1)                           BSD General Commands Manual                          LOGWARN(1)
+
+NAME
+     logwarn - utility for finding interesting messages in log files
+
+SYNOPSIS
+     logwarn [-d dir] [-m firstpat] [-r sufpat] [-n] logfile [!]pattern ...
+
+     logwarn [-i] [-d -dir] logfile
+
+DESCRIPTION
+     logwarn searches for interesting messages in log files, where ``interesting'' is defined by an
+     user-supplied list of positive and negative (preceeded with a ``!'') extended regular expres-
+     sions provided on the command line.
+
+     Each log message is compared against each pattern in the order given.  If the log message
+     matches a positive pattern before matching a negative !pattern then it's printed to standard
+     output.
+
+     logwarn keeps track of its position between invocations, so each matching line is only ever
+     output once.  It also finds messages in log files that have been rotated (and possibly com-
+     pressed) since the previous invocation.
+
+     logwarn also includes support for log messages that span multiple lines.
+
+OPTIONS
+     -d      Specify dir as the directory in which logwarn will store state information between
+             invocations.
+
+             The default state directory is /var/lib/logwarn.
+
+     -h      Output help message and exit.
+
+     -i      Initialize the saved state for logfile as `up to date'.  This causes the next invoca-
+             tion to start its scan at the current (as of this invocation) end of logfile.
+
+     -m      Enable multi-line support.
+
+             Without this flag, each line in logfile is considered a separate log message.  With
+             this flag, each line in logfile is matched against the extended regular expression
+             firstpat; non-matching lines are considered continuations of the previous line.
+
+     -n      Normally, if the logfile does not exist, logwarn will exit with an error.  This flag
+             causes logwarn to treat a non-existent logfile as if it were empty.
+
+     -q      Disable the printing of matching log messages to standard output.  The process exit
+             value can still be used to detect whether there were any matches (see below).
+
+     -r      Make the extended regular expression sufpat the rotated log file suffix pattern.
+
+             When logwarn detects that a log file has been rotated, it searches for the rotated log
+             file by finding files in the same directory that have the same name as logfile plus a
+             suffix matching the rotated log file suffix pattern (if multiple files match, the first
+             one in sorting order is picked).
+
+             The default rotated log file suffix pattern is ^(-[[:digit:]]{8}|\.[01])(\.(gz|bz2))?$
+
+     -v      Output version information and exit.
+
+CAVEATS
+     Log file rotation is detected by comparing filesystem inode numbers, so logwarn may exhibit
+     incorrect behavior if (for example) an existing log file is replaced by a copy of itself.  In
+     this situation, use the -i flag to reinitialize the saved state.
+
+     Currently, the supported compression types for rotated files are gzip(1) and bzip2(1).  The
+     corresponding executables gunzip(1) and bunzip2(1) must be present on the user's $PATH.
+
+     The state files in the state directory have names created by taking the logfile from the com-
+     mand line and replacing ``/'' characters with ``_''.  Referring to the same file using differ-
+     ent pathnames can result in inconsistent behavior.
+
+RETURN VALUES
+     logwarn exits with one of the following values:
+
+     0       No matching log messages were found.
+
+     1       One or more matching log messages were found.
+
+     2       An error occurred.
+
+SEE ALSO
+     Logwarn: Utility for finding interesting messages in log files, http://logwarn.googlecode.com/.
+
+AUTHOR
+     Archie L. Cobbs <archie@dellroad.org>
+
+BSD                                       December 28, 2010                                      BSD
+}}}
