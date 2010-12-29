@@ -84,6 +84,13 @@ as `up to date'.
 This causes the next invocation to start its scan at the current
 (as of this invocation) end of
 .Ar logfile .
+.Pp
+This behavior is also implied when no state file for
+.Ar logfile
+exists, so that
+.Nm
+is effectively self-initializing (and nothing will output) when run for the first time on
+.Ar logfile .
 .It Fl m
 Enable multi-line support.
 .Pp
