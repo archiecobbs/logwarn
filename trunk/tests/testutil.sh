@@ -78,10 +78,10 @@ verify_output()
     shift
     TEMPFILE=`mktemp -q /tmp/logwarntest.XXXXXX`
     [ $? -eq 0 ] || errout "can't create temporary file"
-#    trap "rm -f ${TEMPFILE}" 0 2 3 5 10 13 15
+    trap "rm -f ${TEMPFILE}" 0 2 3 5 10 13 15
     "${LOGWARN}" ${1+"$@"} > "${TEMPFILE}"
     diff -u "${expected}" "${TEMPFILE}" || errout "ERROR: incorrect output from test"
     trap - 0 2 3 5 10 13 15
-#    rm -f "${TEMPFILE}"
+    rm -f "${TEMPFILE}"
 }
 
