@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. testutil.sh
+. ./testutil.sh
 
 NUM_TEST="0"
 NUM_PASS="0"
