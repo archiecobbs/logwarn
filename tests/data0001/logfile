@@ -1,0 +1,10 @@
+START: happy message #1
+START: error message #2
+START: happy message #3
+continuation of happy message #3
+START: happy message #4
+START: error message #5
+continuation of error message #5
+START: happy message #6
+continuation of non-error message #6
+START: happy message #7
