@@ -61,7 +61,7 @@ keeps track of its position between invocations, so each matching line is only e
 This information is kept in a separate `state file' corresponding to each log file.
 .Nm
 interprets a missing state file as if the file were previously empty,
-resulting in a scan of its entire contents (but see `-i' below).
+resulting in a scan of its entire contents (but see `-a' and `-i' below).
 .Pp
 .Nm
 will find messages in log files that have been rotated (and possibly compressed)
@@ -74,7 +74,7 @@ also includes support for log messages that span multiple lines (see `-m').
 .Sh OPTIONS
 .Bl -tag -width Ds
 .It Fl a
-Auto-initialize when state file does not exist.
+Auto-initialize when the state file does not exist.
 This flag turns on the `-i' intialization behavior in cases where
 .Ar logfile
 exists but the state file does not.
@@ -113,12 +113,6 @@ as `up to date'.
 This causes the next invocation to start its scan at the current
 (as of this invocation) end of
 .Ar logfile .
-.Pp
-This flag implies
-.Fl n ,
-so this initialization will work correctly even if
-.Ar logfile
-does not exist yet.
 .It Fl m
 Enable multi-line support.
 .Pp
