@@ -15,7 +15,8 @@ have been rotated (and possibly compressed) since the previous invocation.
 
 Logwarn also includes support for log messages that span multiple lines.
 
-Logwarn is written in C for efficient execution.
+Logwarn is written in C for efficient execution. A Nagios plugin is also
+included.
 
 See INSTALL for installation instructions.
 
