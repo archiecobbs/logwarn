@@ -233,6 +233,10 @@ main(int argc, char **argv)
                 if (strncmp(ent->d_name, bname, bnamelen) != 0)
                     continue;
 
+                // Skip the file itself
+                if (ent->d_name[bnamelen] == '\0')
+                    continue;
+
                 // Compare rotated file against pattern
                 if (regexec(&rot_pattern.regex, ent->d_name + bnamelen, 0, NULL, 0) != 0)
                     continue;
