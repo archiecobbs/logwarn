@@ -22,7 +22,7 @@ errout()
 get_inode()
 {
     local file="$1"
-    case `uname -m` in
+    case `uname -s` in
         *BSD|Darwin)
             statfmt="-f %i"
             ;;
