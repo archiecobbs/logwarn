@@ -41,3 +41,7 @@ logwarn_SOURCES=	main.c \
 svnrev.c:
 			printf 'const char logwarn_svnrev[] = "%s";\n' `svnversion -n` > svnrev.c
 
+.PHONY:			tests
+tests:			logwarn
+			cd tests && sh runtests
+
