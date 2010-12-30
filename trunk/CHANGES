@@ -1,6 +1,8 @@
 
 Version 1.0.2
 
+    - Added `-a' flag to control auto-initialize behavior
+    - Added `-p' flag to change default match to no match
     - Added `-f' flag to specify state file directly
     - Added some more man page clarifications
 

@@ -27,10 +27,10 @@
 .Sh SYNOPSIS
 .Nm logwarn
 .Bk -words
+.Op Fl ahnpqv
 .Op Fl d Ar dir | Fl f Ar file
 .Op Fl m Ar firstpat
 .Op Fl r Ar sufpat
-.Op Fl n
 .Ar logfile
 .Ar [!]pattern ...
 .Ek
@@ -43,8 +43,7 @@
 .Ek
 .Sh DESCRIPTION
 .Nm
-searches for interesting messages in log files, where ``interesting''
-is defined by an
+searches for interesting messages in log files, where ``interesting'' is defined by an
 user-supplied list of positive and negative (preceeded with a ``!'') extended regular expressions
 provided on the command line.
 .Pp
@@ -74,6 +73,13 @@ followed by a suffix matching the rotated log file suffix pattern (see `-r' belo
 also includes support for log messages that span multiple lines (see `-m').
 .Sh OPTIONS
 .Bl -tag -width Ds
+.It Fl a
+Auto-initialize when state file does not exist.
+This flag turns on the `-i' intialization behavior in cases where
+.Ar logfile
+exists but the state file does not.
+Normally this is not what you want, but this can be helpful in cases where it's important to
+avoid a flood of repeated log messages caused by state files being deleted somehow.
 .It Fl d
 Specify
 .Ar dir
@@ -135,6 +141,10 @@ This flag causes
 to treat a non-existent
 .Ar logfile
 as if it were empty.
+.It Fl p
+Change default match behavior to negative.
+By default, if a log message doesn't match any of the positive or negative patterns, it is considered a match.
+This flag reverses this behavior so that these messages are considered non-matches.
 .It Fl q
 Disable the printing of matching log messages to standard output.
 The process exit value can still be used to detect whether there were any matches (see below).

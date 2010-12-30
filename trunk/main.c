@@ -58,6 +58,8 @@ static const char   *state_dir;
 static char         *state_file;
 static struct repat log_pattern;
 static struct repat rot_pattern;
+static int          default_match = 1;
+static int          auto_initialize;
 static int          num_match_patterns;
 static int          quiet;
 static int          any_matches;
@@ -81,8 +83,11 @@ main(int argc, char **argv)
     int i;
 
     // Parse command line
-    while ((i = getopt(argc, argv, "d:f:him:nqr:v")) != -1) {
+    while ((i = getopt(argc, argv, "ad:f:him:npqr:v")) != -1) {
         switch (i) {
+        case 'a':
+            auto_initialize = 1;
+            break;
         case 'd':
             state_dir = optarg;
             break;
@@ -104,6 +109,9 @@ main(int argc, char **argv)
             break;
         case 'n':
             ignore_nonexistent = 1;
+            break;
+        case 'p':
+            default_match = 0;
             break;
         case 'q':
             quiet = 1;
@@ -190,7 +198,7 @@ main(int argc, char **argv)
     // run after explicit initialization if logfile previously did not
     // exist (in which case we would not have created a saved state file).
     // Also avoids repeats when we can't save our state for some reason.
-    if (load_state(state_file, &state) == -1)
+    if (load_state(state_file, &state) == -1 && auto_initialize)
         init_state_from_logfile(logfile, &state);
 
     // Has log file rotated since we last checked?
@@ -356,7 +364,7 @@ scan_file(const char *logfile, struct scan_state *state)
                 }
             }
             if (matches == -1)
-                matches = 1;
+                matches = default_match;
             state->matching = matches;
         }
 
@@ -396,9 +404,10 @@ static void
 usage(void)
 {
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "  logwarn [-d dir | -f file] [-m firstpat] [-r sufpat] [-nq] logfile [!]pattern ...\n");
+    fprintf(stderr, "  logwarn [-d dir | -f file] [-m firstpat] [-r sufpat] [-ahnqpv] logfile [!]pattern ...\n");
     fprintf(stderr, "  logwarn [-d dir | -f file] -i logfile\n");
     fprintf(stderr, "Options:\n");
+    fprintf(stderr, "  -a    Auto-init: force `-i' if no state file exists\n");
     fprintf(stderr, "  -d    Specify state directory; default \"%s\"\n", DEFAULT_STATE_DIR);
     fprintf(stderr, "  -f    Specify state file directly\n");
     fprintf(stderr, "  -h    Output this help message and exit\n");
