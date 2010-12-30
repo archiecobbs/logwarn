@@ -41,22 +41,18 @@
 #define POSITION_NAME   "POSITION"
 #define MATCHING_NAME   "MATCHING"
 
-// Internal functions
-static void cache_file(const char *cache_dir, const char *file, char *buf, size_t max);
-
 int
-load_state(const char *cache_dir, const char *file, struct scan_state *state)
+load_state(const char *state_file, struct scan_state *state)
 {
-    char buf[PATH_MAX];
+    char buf[1024];
     struct stat sb;
     FILE *fp;
 
     memset(state, 0, sizeof(*state));
     state->line = 1;
-    cache_file(cache_dir, file, buf, sizeof(buf));
-    if (stat(buf, &sb) == -1 || S_ISDIR(sb.st_mode))
+    if (stat(state_file, &sb) == -1 || S_ISDIR(sb.st_mode))
         return -1;
-    if ((fp = fopen(buf, "r")) == NULL)
+    if ((fp = fopen(state_file, "r")) == NULL)
         return -1;
     while (fgets(buf, sizeof(buf), fp) != NULL) {
         const char *s = buf;
@@ -91,9 +87,7 @@ load_state(const char *cache_dir, const char *file, struct scan_state *state)
             fvalue = "1";
 
         // Decode numerical value
-        if (((value = strtoul(fvalue, &eptr, 10)) == ULONG_MAX
-           && errno == ERANGE)
-          || *eptr != '\0') {
+        if (((value = strtoul(fvalue, &eptr, 10)) == ULONG_MAX && errno == ERANGE) || *eptr != '\0') {
             warnx("can't decode value \"%s\" for \"%s\"", fvalue, fname);
             continue;
         }
@@ -113,22 +107,21 @@ load_state(const char *cache_dir, const char *file, struct scan_state *state)
 }
 
 int
-save_state(const char *cache_dir, const char *file, const struct scan_state *state)
+save_state(const char *state_file, const char *logfile, const struct scan_state *state)
 {
-    char buf[PATH_MAX];
     FILE *fp;
 
-    cache_file(cache_dir, file, buf, sizeof(buf));
-    if ((fp = fopen(buf, "w")) == NULL)
+    if ((fp = fopen(state_file, "w")) == NULL)
         return -1;
-    dump_state(fp, file, state);
+    dump_state(fp, logfile, state);
+    fclose(fp);
     return 0;
 }
 
 void
-dump_state(FILE *fp, const char *file, const struct scan_state *state)
+dump_state(FILE *fp, const char *logfile, const struct scan_state *state)
 {
-    fprintf(fp, "# logscanner saved state for \"%s\"\n", file);
+    fprintf(fp, "# %s %s state for \"%s\"\n", PACKAGE_TARNAME, PACKAGE_VERSION, logfile);
     fprintf(fp, "%s=\"%lu\"\n", INODENUM_NAME, (unsigned long)state->inode);
     fprintf(fp, "%s=\"%lu\"\n", LINENUM_NAME, state->line);
     fprintf(fp, "%s=\"%lu\"\n", POSITION_NAME, state->pos);
@@ -137,7 +130,7 @@ dump_state(FILE *fp, const char *file, const struct scan_state *state)
 }
 
 void
-init_state_from_logfile(const char *file, struct scan_state *state)
+init_state_from_logfile(const char *logfile, struct scan_state *state)
 {
     struct stat sb;
     FILE *fp;
@@ -145,15 +138,15 @@ init_state_from_logfile(const char *file, struct scan_state *state)
 
     memset(state, 0, sizeof(*state));
     state->line = 1;
-    if (stat(file, &sb) == -1)
-        err(EXIT_ERROR, "%s", file);
+    if (stat(logfile, &sb) == -1)
+        err(EXIT_ERROR, "%s", logfile);
     if (S_ISDIR(sb.st_mode & S_IFMT)) {
         errno = EISDIR;
-        err(EXIT_ERROR, "%s", file);
+        err(EXIT_ERROR, "%s", logfile);
     }
     state->inode = sb.st_ino;
-    if ((fp = fopen(file, "r")) == NULL)
-        err(EXIT_ERROR, "%s", file);
+    if ((fp = fopen(logfile, "r")) == NULL)
+        err(EXIT_ERROR, "%s", logfile);
     while ((ch = getc(fp)) != EOF) {
         state->pos++;
         if (ch == '\n')
@@ -162,16 +155,16 @@ init_state_from_logfile(const char *file, struct scan_state *state)
     fclose(fp);
 }
 
-static void
-cache_file(const char *cache_dir, const char *file, char *buf, size_t max)
+void
+state_file_name(const char *state_dir, const char *logfile, char *buf, size_t max)
 {
     int i;
 
-    snprintf(buf, max, "%s/", cache_dir);
-    while (*file == '/')
-        file++;
-    for (i = strlen(buf); i < max - 1 && *file != '\0'; ) {
-        char ch = *file++;
+    snprintf(buf, max, "%s/", state_dir);
+    while (*logfile == '/')
+        logfile++;
+    for (i = strlen(buf); i < max - 1 && *logfile != '\0'; ) {
+        char ch = *logfile++;
 
         if (ch == '/')
             ch = '_';

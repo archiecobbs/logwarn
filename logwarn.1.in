@@ -27,7 +27,7 @@
 .Sh SYNOPSIS
 .Nm logwarn
 .Bk -words
-.Op Fl d Ar dir
+.Op Fl d Ar dir | Fl f Ar file
 .Op Fl m Ar firstpat
 .Op Fl r Ar sufpat
 .Op Fl n
@@ -37,8 +37,8 @@
 .Pp
 .Nm logwarn
 .Bk -words
+.Op Fl d Ar dir | Fl f Ar file
 .Op Fl i
-.Op Fl d dir
 .Ar logfile
 .Ek
 .Sh DESCRIPTION
@@ -59,11 +59,19 @@ or if none of the patterns match, then it's printed to standard output.
 .Pp
 .Nm
 keeps track of its position between invocations, so each matching line is only ever output once.
-It also finds messages in log files that have been rotated (and possibly compressed)
-since the previous invocation.
+This information is kept in a separate `state file' corresponding to each log file.
+.Nm
+interprets a missing state file as if the file were previously empty,
+resulting in a scan of its entire contents (but see `-i' below).
 .Pp
 .Nm
-also includes support for log messages that span multiple lines.
+will find messages in log files that have been rotated (and possibly compressed)
+since the previous invocation, as long as the rotated file has a name equal to
+.Ar logfile
+followed by a suffix matching the rotated log file suffix pattern (see `-r' below).
+.Pp
+.Nm
+also includes support for log messages that span multiple lines (see `-m').
 .Sh OPTIONS
 .Bl -tag -width Ds
 .It Fl d
@@ -72,9 +80,24 @@ Specify
 as the directory in which
 .Nm
 will store state information between invocations.
+When this flag is used, the name of the state file is automatically generated from
+.Ar logfile .
 .Pp
 The default state directory is
 .Pa @DEFAULT_CACHE_DIR@ .
+.Pp
+It is an error to use this flag and
+.Fl f
+at the same time.
+.It Fl f
+Specify the state file used to store state information between invocations.
+Each
+.Ar logfile
+should have its own state file.
+.Pp
+It is an error to use this flag and
+.Fl d
+at the same time.
 .It Fl h
 Output help message and exit.
 .It Fl i
@@ -85,12 +108,11 @@ This causes the next invocation to start its scan at the current
 (as of this invocation) end of
 .Ar logfile .
 .Pp
-This behavior is also implied when no state file for
+This flag implies
+.Fl n ,
+so this initialization will work correctly even if
 .Ar logfile
-exists, so that
-.Nm
-is effectively self-initializing (and nothing will output) when run for the first time on
-.Ar logfile .
+does not exist yet.
 .It Fl m
 Enable multi-line support.
 .Pp
@@ -128,14 +150,21 @@ detects that a log file has been rotated, it searches for the rotated log file b
 files in the same directory that have the same name as
 .Ar logfile
 plus a suffix matching the rotated log file suffix pattern
-(if multiple files match, the first one in sorting order is picked).
+(when multiple files match, the first one in sorting order is chosen).
 .Pp
 The default rotated log file suffix pattern is
 .Pa ^(-[[:digit:]]{8}|\e\.[01])(\e\.(gz|bz2))?$
 .It Fl v
 Output version information and exit.
 .El
-.Sh CAVEATS
+.Sh DETAILS
+.Nm
+treats missing state files as if the log file were previously empty, and it
+never creates new state files for nonexistent log files.
+The result is that
+.Nm
+correctly functions even if the log file doesn't come into existence until after the first few runs.
+.Pp
 Log file rotation is detected by comparing filesystem inode numbers, so
 .Nm
 may exhibit incorrect behavior if (for example) an existing log file is replaced by a copy of itself.
@@ -154,13 +183,15 @@ and
 must be present on the user's
 .Pa $PATH .
 .Pp
-The state files in the state directory have names created by taking the
+When the
+.Fl f
+flag is not specified, the state files in the state directory have names created by taking the
 .Ar logfile
 from the command line and replacing ``/'' characters with ``_''.
-Referring to the same file using different pathnames can result in inconsistent behavior.
+Therefore, referring to the same log file using different pathnames can result in inconsistent behavior.
 .Pp
 The matching patterns are only applied to the first line of a multi-line log message.
-However, when there is a match, all log message lines will be output.
+However, when there is a match, all continuation lines will be output with the message.
 .Sh RETURN VALUES
 .Nm
 exits with one of the following values:
