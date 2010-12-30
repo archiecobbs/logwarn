@@ -126,7 +126,6 @@ dump_state(FILE *fp, const char *logfile, const struct scan_state *state)
     fprintf(fp, "%s=\"%lu\"\n", LINENUM_NAME, state->line);
     fprintf(fp, "%s=\"%lu\"\n", POSITION_NAME, state->pos);
     fprintf(fp, "%s=\"%s\"\n", MATCHING_NAME, state->matching ? "true" : "false");
-    fclose(fp);
 }
 
 void
