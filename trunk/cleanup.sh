@@ -15,4 +15,5 @@ find . \( -name Makefile -o -name Makefile.in \) -print0 | xargs -0 rm -f
 rm -f svnrev.c
 rm -f *.o logwarn logwarn.1
 rm -f logwarn-*.tar.gz
+rm -rf a.out.* tags
 
