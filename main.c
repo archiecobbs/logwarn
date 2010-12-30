@@ -136,6 +136,10 @@ main(int argc, char **argv)
         argv++;
         argc--;
         num_match_patterns = argc;
+        if (initialize && num_match_patterns > 0) {
+            usage();
+            exit(EXIT_ERROR);
+        }
         if (num_match_patterns > 0) {
             if ((match_patterns = malloc(num_match_patterns * sizeof(*match_patterns))) == NULL)
                 err(EXIT_ERROR, "malloc");
