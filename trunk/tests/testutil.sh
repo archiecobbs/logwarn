@@ -18,6 +18,21 @@ errout()
     exit 1
 }
 
+# Get file's inode
+get_inode()
+{
+    local file="$1"
+    case `uname -m` in
+        *BSD|Darwin)
+            statfmt="-f %i"
+            ;;
+        *)
+            statfmt="--format=%i"
+            ;;
+    esac
+    stat ${statfmt} "${file}"
+}
+
 # Create a state file 
 create_state_file()
 {
@@ -35,7 +50,7 @@ create_state_file()
     if [ "${matching}" = "" ]; then
         matching="false"
     fi
-    local inode=`stat -f %i "${logfile}"`
+    local inode=`get_inode "${logfile}"`
     printf 'INODENUM="%d"\nLINENUM="%d"\nPOSITION="%d"MATCHING="%s"\n' \
       "${inode}" "${linenum}" "${position}" "${matching}" > "${statefile}"
 }
@@ -63,7 +78,7 @@ verify_state_file()
     local linenum="$3"
     local position="$4"
     local matching="$5"
-    local inode=`stat -f %i "${logfile}"`
+    local inode=`get_inode "${logfile}"`
     . "${statefile}"
     verify_value INODENUM "${inode}" "${INODENUM}"
     verify_value LINENUM "${linenum}" "${LINENUM}"
