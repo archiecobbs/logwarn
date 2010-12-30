@@ -8,9 +8,9 @@ NAME
      logwarn - utility for finding interesting messages in log files
 
 SYNOPSIS
-     logwarn [-d dir] [-m firstpat] [-r sufpat] [-n] logfile [!]pattern ...
+     logwarn [-ahnpqv] [-d dir | -f file] [-m firstpat] [-r sufpat] logfile [!]pattern ...
 
-     logwarn [-i] [-d -dir] logfile
+     logwarn [-d dir | -f file] [-i] logfile
 
 DESCRIPTION
      logwarn searches for interesting messages in log files, where ``interesting'' is defined by an
@@ -22,25 +22,39 @@ DESCRIPTION
      match, then it's printed to standard output.
 
      logwarn keeps track of its position between invocations, so each matching line is only ever
-     output once.  It also finds messages in log files that have been rotated (and possibly com-
-     pressed) since the previous invocation.
+     output once.  This information is kept in a separate `state file' corresponding to each log
+     file.  logwarn interprets a missing state file as if the file were previously empty, resulting
+     in a scan of its entire contents (but see `-a' and `-i' below).
 
-     logwarn also includes support for log messages that span multiple lines.
+     logwarn will find messages in log files that have been rotated (and possibly compressed) since
+     the previous invocation, as long as the rotated file has a name equal to logfile followed by a
+     suffix matching the rotated log file suffix pattern (see `-r' below).
+
+     logwarn also includes support for log messages that span multiple lines (see `-m').
 
 OPTIONS
+     -a      Auto-initialize when the state file does not exist.  This flag turns on the `-i'
+             intialization behavior in cases where logfile exists but the state file does not.  Nor-
+             mally this is not what you want, but this can be helpful in cases where it's important
+             to avoid a flood of repeated log messages caused by state files being deleted somehow.
+
      -d      Specify dir as the directory in which logwarn will store state information between
-             invocations.
+             invocations.  When this flag is used, the name of the state file is automatically gen-
+             erated from logfile.
 
              The default state directory is /var/lib/logwarn.
+
+             It is an error to use this flag and -f at the same time.
+
+     -f      Specify the state file used to store state information between invocations.  Each
+             logfile should have its own state file.
+
+             It is an error to use this flag and -d at the same time.
 
      -h      Output help message and exit.
 
      -i      Initialize the saved state for logfile as `up to date'.  This causes the next invoca-
              tion to start its scan at the current (as of this invocation) end of logfile.
-
-             This behavior is also implied when no state file for logfile exists, so that logwarn is
-             effectively self-initializing (and nothing will output) when run for the first time on
-             logfile.
 
      -m      Enable multi-line support.
 
@@ -51,6 +65,10 @@ OPTIONS
      -n      Normally, if the logfile does not exist, logwarn will exit with an error.  This flag
              causes logwarn to treat a non-existent logfile as if it were empty.
 
+     -p      Change default match behavior to negative.  By default, if a log message doesn't match
+             any of the positive or negative patterns, it is considered a match.  This flag reverses
+             this behavior so that these messages are considered non-matches.
+
      -q      Disable the printing of matching log messages to standard output.  The process exit
              value can still be used to detect whether there were any matches (see below).
 
@@ -58,14 +76,18 @@ OPTIONS
 
              When logwarn detects that a log file has been rotated, it searches for the rotated log
              file by finding files in the same directory that have the same name as logfile plus a
-             suffix matching the rotated log file suffix pattern (if multiple files match, the first
-             one in sorting order is picked).
+             suffix matching the rotated log file suffix pattern (when multiple files match, the
+             first one in sorting order is chosen).
 
              The default rotated log file suffix pattern is ^(-[[:digit:]]{8}|\.[01])(\.(gz|bz2))?$
 
      -v      Output version information and exit.
 
-CAVEATS
+DETAILS
+     logwarn treats missing state files as if the log file were previously empty, and it never cre-
+     ates new state files for nonexistent log files.  The result is that logwarn correctly functions
+     even if the log file doesn't come into existence until after the first few runs.
+
      Log file rotation is detected by comparing filesystem inode numbers, so logwarn may exhibit
      incorrect behavior if (for example) an existing log file is replaced by a copy of itself.  In
      this situation, use the -i flag to reinitialize the saved state.
@@ -73,12 +95,12 @@ CAVEATS
      Currently, the supported compression types for rotated files are gzip(1) and bzip2(1).  The
      corresponding executables gunzip(1) and bunzip2(1) must be present on the user's $PATH.
 
-     The state files in the state directory have names created by taking the logfile from the com-
-     mand line and replacing ``/'' characters with ``_''.  Referring to the same file using differ-
-     ent pathnames can result in inconsistent behavior.
+     When the -f flag is not specified, the state files in the state directory have names created by
+     taking the logfile from the command line and replacing ``/'' characters with ``_''.  Therefore,
+     referring to the same log file using different pathnames can result in inconsistent behavior.
 
      The matching patterns are only applied to the first line of a multi-line log message.  However,
-     when there is a match, all log message lines will be output.
+     when there is a match, all continuation lines will be output with the message.
 
 RETURN VALUES
      logwarn exits with one of the following values:
