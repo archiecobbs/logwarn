@@ -1,5 +1,5 @@
 
-Version 1.0.2
+Version 1.0.2 (r34) Released December 30, 2010
 
     - Removed the automatic implication of `-n' by `-i'
     - Added `-a' flag to control auto-initialize behavior
