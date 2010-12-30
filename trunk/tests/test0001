@@ -3,6 +3,6 @@
 . testutil.sh
 cd data0001
 reset_state_file statefile logfile
-verify_output output -f statefile -m ^START: logfile error \!.
+verify_output output -p -f statefile -m ^START: logfile error
 verify_state_file statefile logfile 11 271 false
 
