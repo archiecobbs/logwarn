@@ -1,4 +1,9 @@
 
+Version 1.0.2
+
+    - Added `-f' flag to specify state file directly
+    - Added some more man page clarifications
+
 Version 1.0.1 (r14) Released December 29, 2010
 
     - Added some man page fixes and clarifications

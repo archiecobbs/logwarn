@@ -36,8 +36,9 @@ struct scan_state {
 extern const char logwarn_svnrev[];
 
 // Global functions
-extern int  load_state(const char *cache_dir, const char *file, struct scan_state *state);
-extern int  save_state(const char *cache_dir, const char *file, const struct scan_state *state);
-extern void dump_state(FILE *fp, const char *file, const struct scan_state *state);
-extern void init_state_from_logfile(const char *file, struct scan_state *state);
+extern int  load_state(const char *state_file, struct scan_state *state);
+extern int  save_state(const char *state_file, const char *logfile, const struct scan_state *state);
+extern void dump_state(FILE *fp, const char *logfile, const struct scan_state *state);
+extern void init_state_from_logfile(const char *logfile, struct scan_state *state);
+extern void state_file_name(const char *state_dir, const char *logfile, char *buf, size_t max);
 

@@ -43,8 +43,8 @@
 #define DEFAULT_ROTPAT          "^(-[[:digit:]]{8}|\\.[01])(\\.(gz|bz2))?$"
 #endif
 
-#ifndef DEFAULT_CACHE_DIR
-#define DEFAULT_CACHE_DIR       "/var/lib/logwarn"
+#ifndef DEFAULT_STATE_DIR
+#define DEFAULT_STATE_DIR       "/var/lib/logwarn"
 #endif
 
 struct repat {
@@ -54,7 +54,8 @@ struct repat {
 };
 
 // Global variables
-static const char   *cache_dir = DEFAULT_CACHE_DIR;
+static const char   *state_dir;
+static char         *state_file;
 static struct repat log_pattern;
 static struct repat rot_pattern;
 static int          num_match_patterns;
@@ -80,10 +81,13 @@ main(int argc, char **argv)
     int i;
 
     // Parse command line
-    while ((i = getopt(argc, argv, "d:him:nqr:v")) != -1) {
+    while ((i = getopt(argc, argv, "d:f:him:nqr:v")) != -1) {
         switch (i) {
         case 'd':
-            cache_dir = optarg;
+            state_dir = optarg;
+            break;
+        case 'f':
+            state_file = optarg;
             break;
         case 'm':
             parse_pattern(&log_pattern, optarg);
@@ -142,6 +146,17 @@ main(int argc, char **argv)
         break;
     }
 
+    // Check "-d" vs. "-f" and determine state file
+    if (state_dir != NULL && state_file != NULL)
+        errx(EXIT_ERROR, "specify only one of `-d' and `-f'");
+    if (state_file == NULL) {
+        if (state_dir == NULL)
+            state_dir = DEFAULT_STATE_DIR;
+        if ((state_file = malloc(PATH_MAX)) == NULL)
+            err(EXIT_ERROR, "malloc");
+        state_file_name(state_dir, logfile, state_file, PATH_MAX);
+    }
+
     // Parse rotated file pattern
     parse_pattern(&rot_pattern, rotpat);
 
@@ -166,7 +181,7 @@ main(int argc, char **argv)
     // Handle explicit initialization case
     if (initialize) {
         init_state_from_logfile(logfile, &state);
-        if (save_state(cache_dir, logfile, &state) == -1)
+        if (save_state(state_file, logfile, &state) == -1)
             exit(EXIT_ERROR);
         exit(EXIT_OK);
     }
@@ -175,7 +190,7 @@ main(int argc, char **argv)
     // run after explicit initialization if logfile previously did not
     // exist (in which case we would not have created a saved state file).
     // Also avoids repeats when we can't save our state for some reason.
-    if (load_state(cache_dir, logfile, &state) == -1)
+    if (load_state(state_file, &state) == -1)
         init_state_from_logfile(logfile, &state);
 
     // Has log file rotated since we last checked?
@@ -243,7 +258,7 @@ main(int argc, char **argv)
     scan_file(logfile, &state);
 
     // Save state
-    if (save_state(cache_dir, logfile, &state) == -1)
+    if (save_state(state_file, logfile, &state) == -1)
         exit(EXIT_ERROR);
 
     // Done
@@ -251,7 +266,7 @@ main(int argc, char **argv)
 }
 
 static int
-scan_file(const char *file, struct scan_state *state)
+scan_file(const char *logfile, struct scan_state *state)
 {
     unsigned char piped = 0;;
     unsigned char buf[3];
@@ -261,7 +276,7 @@ scan_file(const char *file, struct scan_state *state)
     int i;
 
     // Open file
-    if ((fp = fopen(file, "r")) == NULL)
+    if ((fp = fopen(logfile, "r")) == NULL)
         return -1;
 
     // Check for compressed file
@@ -275,7 +290,7 @@ scan_file(const char *file, struct scan_state *state)
         const char *cmd = buf[0] == 0x1f ? "gunzip" : "bunzip2";
 
         fclose(fp);
-        snprintf(cmdbuf, sizeof(cmdbuf), "%s -c '%s'", cmd, file);
+        snprintf(cmdbuf, sizeof(cmdbuf), "%s -c '%s'", cmd, logfile);
         if ((fp = popen(cmdbuf, "r")) == NULL)
             return -1;
         piped = 1;
@@ -317,7 +332,7 @@ scan_file(const char *file, struct scan_state *state)
 
         // End of file?
         if (len == 0) {
-            save_state(cache_dir, file, state);
+            save_state(state_file, logfile, state);
             break;
         }
 
@@ -371,8 +386,7 @@ parse_pattern(struct repat *pat, const char *string)
 
     if ((r = regcomp(&pat->regex, string, REG_EXTENDED|REG_NOSUB)) != 0) {
         regerror(r, &pat->regex, ebuf, sizeof(ebuf));
-        warnx("invalid pattern \"%s\": %s", string, ebuf);
-        usage();
+        warnx("invalid regular expression \"%s\": %s", string, ebuf);
         exit(EXIT_ERROR);
     }
     pat->string = string;
@@ -382,15 +396,14 @@ static void
 usage(void)
 {
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "  logwarn [-nq] [-d dir] [-m pattern] [-r pattern] file [ [!]pattern ... ]\n");
-    fprintf(stderr, "  logwarn -i [-d dir] file\n");
-    fprintf(stderr, "  logwarn -h\n");
-    fprintf(stderr, "  logwarn -v\n");
+    fprintf(stderr, "  logwarn [-d dir | -f file] [-m firstpat] [-r sufpat] [-nq] logfile [!]pattern ...\n");
+    fprintf(stderr, "  logwarn [-d dir | -f file] -i logfile\n");
     fprintf(stderr, "Options:\n");
-    fprintf(stderr, "  -d    Specify cache directory; default \"%s\"\n", DEFAULT_CACHE_DIR);
+    fprintf(stderr, "  -d    Specify state directory; default \"%s\"\n", DEFAULT_STATE_DIR);
+    fprintf(stderr, "  -f    Specify state file directly\n");
     fprintf(stderr, "  -h    Output this help message and exit\n");
     fprintf(stderr, "  -i    Initialize state as `up to date' (implies -n)\n");
-    fprintf(stderr, "  -m    Enable multi-line support; first lines start with pattern\n");
+    fprintf(stderr, "  -m    Enable multi-line support; first lines start with firstpat\n");
     fprintf(stderr, "  -n    A nonexistent log file is not an error; treat as empty\n");
     fprintf(stderr, "  -q    Don't output the matched log messages\n");
     fprintf(stderr, "  -r    Specify rotated file suffix pattern; default \"%s\"\n", DEFAULT_ROTPAT);
