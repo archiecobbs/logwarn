@@ -105,7 +105,6 @@ main(int argc, char **argv)
             exit(EXIT_OK);
         case 'i':
             initialize = 1;
-            ignore_nonexistent = 1;
             break;
         case 'n':
             ignore_nonexistent = 1;

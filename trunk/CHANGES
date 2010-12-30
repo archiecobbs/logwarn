@@ -1,6 +1,7 @@
 
 Version 1.0.2
 
+    - Removed the automatic implication of `-n' by `-i'
     - Added `-a' flag to control auto-initialize behavior
       NOTE: this changes the default behavior which previously assumed `-a'
     - Added `-p' flag to change default match to no match
