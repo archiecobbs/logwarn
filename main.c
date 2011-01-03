@@ -66,7 +66,7 @@ static int          any_matches;
 static struct repat *match_patterns;
 
 // Internal functions
-static int  scan_file(const char *file, struct scan_state *state);
+static void scan_file(const char *file, struct scan_state *state);
 static void parse_pattern(struct repat *pat, const char *string);
 static void version(void);
 static void usage(void);
@@ -192,8 +192,7 @@ main(int argc, char **argv)
     // Handle explicit initialization case
     if (initialize) {
         init_state_from_logfile(logfile, &state);
-        if (save_state(state_file, logfile, &state) == -1)
-            exit(EXIT_ERROR);
+        save_state(state_file, logfile, &state);
         exit(EXIT_OK);
     }
 
@@ -273,14 +272,13 @@ main(int argc, char **argv)
     scan_file(logfile, &state);
 
     // Save state
-    if (save_state(state_file, logfile, &state) == -1)
-        exit(EXIT_ERROR);
+    save_state(state_file, logfile, &state);
 
     // Done
     exit(any_matches ? EXIT_MATCHES : EXIT_OK);
 }
 
-static int
+static void
 scan_file(const char *logfile, struct scan_state *state)
 {
     unsigned char piped = 0;;
@@ -292,22 +290,20 @@ scan_file(const char *logfile, struct scan_state *state)
 
     // Open file
     if ((fp = fopen(logfile, "r")) == NULL)
-        return -1;
+        err(EXIT_ERROR, "%s", logfile);
 
     // Check for compressed file
-    if (fread(buf, 1, 3, fp) != 3) {
-        fclose(fp);
-        return -1;
-    }
+    if (fread(buf, 1, 3, fp) != 3)
+        err(EXIT_ERROR, "%s", logfile);
 
     // Decode gzip/bzip2 on the fly
     if ((buf[0] == 0x1f && buf[1] == 0x8b) || (buf[0] == 'B' && buf[1] == 'Z' && buf[2] == 'h')) {
         const char *cmd = buf[0] == 0x1f ? "gunzip" : "bunzip2";
 
-        fclose(fp);
+        (void)fclose(fp);
         snprintf(cmdbuf, sizeof(cmdbuf), "%s -c '%s'", cmd, logfile);
         if ((fp = popen(cmdbuf, "r")) == NULL)
-            return -1;
+            err(EXIT_ERROR, "can't invoke \"%s\"", cmdbuf);
         piped = 1;
     } else
         rewind(fp);
@@ -384,13 +380,13 @@ scan_file(const char *logfile, struct scan_state *state)
     }
 
     // Close file
-    if (piped)
-        pclose(fp);
-    else
-        fclose(fp);
-
-    // Done
-    return 0;
+    if (piped) {
+        if (pclose(fp) == -1)
+            err(EXIT_ERROR, "pclose: %s", logfile);
+    } else {
+        if (fclose(fp) == EOF)
+            err(EXIT_ERROR, "fclose: %s", logfile);
+    }
 }
 
 static void
