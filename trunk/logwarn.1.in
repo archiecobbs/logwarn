@@ -165,7 +165,9 @@ Output version information and exit.
 .Nm
 treats missing state files as if the log file were previously empty, and it
 never creates new state files for nonexistent log files.
-The result is that
+The result is that when the
+.Fl n
+flag is used,
 .Nm
 correctly functions even if the log file doesn't come into existence until after the first few runs.
 .Pp
