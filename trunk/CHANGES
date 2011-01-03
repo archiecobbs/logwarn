@@ -1,4 +1,8 @@
 
+Version 1.0.3
+
+    - Tightend up error checking around file operations
+
 Version 1.0.2 (r34) Released December 30, 2010
 
     - Removed the automatic implication of `-n' by `-i'

@@ -102,20 +102,20 @@ load_state(const char *state_file, struct scan_state *state)
         else if (strcmp(fname, MATCHING_NAME) == 0)
             state->matching = value != 0;
     }
-    fclose(fp);
+    (void)fclose(fp);
     return 0;
 }
 
-int
+void
 save_state(const char *state_file, const char *logfile, const struct scan_state *state)
 {
     FILE *fp;
 
     if ((fp = fopen(state_file, "w")) == NULL)
-        return -1;
+        err(EXIT_ERROR, "%s", state_file);
     dump_state(fp, logfile, state);
-    fclose(fp);
-    return 0;
+    if (fclose(fp) == EOF)
+        err(EXIT_ERROR, "%s", state_file);
 }
 
 void
@@ -151,7 +151,7 @@ init_state_from_logfile(const char *logfile, struct scan_state *state)
         if (ch == '\n')
             state->line++;
     }
-    fclose(fp);
+    (void)fclose(fp);
 }
 
 void
