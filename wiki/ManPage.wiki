@@ -56,11 +56,14 @@ OPTIONS
      -i      Initialize the saved state for logfile as `up to date'.  This causes the next invoca-
              tion to start its scan at the current (as of this invocation) end of logfile.
 
-     -m      Enable multi-line support.
+     -m      Enable multi-line support using firstpat to match the first line of new log messages.
 
              Without this flag, each line in logfile is considered a separate log message.  With
              this flag, each line in logfile is matched against the extended regular expression
              firstpat; non-matching lines are considered continuations of the previous line.
+
+             Multi-line mode will work correctly even if a message crosses a log file rotation
+             boundary.
 
      -n      Normally, if the logfile does not exist, logwarn will exit with an error.  This flag
              causes logwarn to treat a non-existent logfile as if it were empty.
@@ -85,8 +88,9 @@ OPTIONS
 
 DETAILS
      logwarn treats missing state files as if the log file were previously empty, and it never cre-
-     ates new state files for nonexistent log files.  The result is that logwarn correctly functions
-     even if the log file doesn't come into existence until after the first few runs.
+     ates new state files for nonexistent log files.  The result is that when the -n flag is used,
+     logwarn correctly functions even if the log file doesn't come into existence until after the
+     first few runs.
 
      Log file rotation is detected by comparing filesystem inode numbers, so logwarn may exhibit
      incorrect behavior if (for example) an existing log file is replaced by a copy of itself.  In
@@ -101,6 +105,12 @@ DETAILS
 
      The matching patterns are only applied to the first line of a multi-line log message.  However,
      when there is a match, all continuation lines will be output with the message.
+
+     In order to avoid the race condition where logwarn reads a partially written line, if the last
+     line of logfile does not end in a newline character, it is not processed.
+
+     The maximum supported length for a single line is 100,000 characters; longer lines will be
+     split and treated as multiple lines.
 
 RETURN VALUES
      logwarn exits with one of the following values:
