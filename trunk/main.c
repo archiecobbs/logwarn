@@ -334,7 +334,7 @@ scan_file(const char *logfile, struct scan_state *state)
         int len;
 
         // Read next line, or up to MAX_LINE_LENGTH of it
-        for (len = 0; len < sizeof(line) - 1; ) {
+        for (len = 0; len < MAX_LINE_LENGTH - 1; ) {
             if ((ch = getc(fp)) == -1) {
                 line[len] = '\0';
                 break;
@@ -348,7 +348,7 @@ scan_file(const char *logfile, struct scan_state *state)
         }
 
         // End of file?
-        if (len == 0 || (len < sizeof(line) - 1 && !newline)) {
+        if (len == 0 || (len < MAX_LINE_LENGTH - 1 && !newline)) {
             save_state(state_file, logfile, state);
             break;
         }
