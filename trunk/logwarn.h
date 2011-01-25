@@ -19,6 +19,9 @@
  * $Id$
  */
 
+// Maximum line length
+#define MAX_LINE_LENGTH     100000
+
 // Log scan state
 struct scan_state {
     ino_t           inode;          // file inode number

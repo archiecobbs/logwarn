@@ -114,7 +114,9 @@ This causes the next invocation to start its scan at the current
 (as of this invocation) end of
 .Ar logfile .
 .It Fl m
-Enable multi-line support.
+Enable multi-line support using
+.Ar firstpat
+to match the first line of new log messages.
 .Pp
 Without this flag, each line in
 .Ar logfile
@@ -124,6 +126,8 @@ With this flag, each line in
 is matched against the extended regular expression
 .Ar firstpat ;
 non-matching lines are considered continuations of the previous line.
+.Pp
+Multi-line mode will work correctly even if a message crosses a log file rotation boundary.
 .It Fl n
 Normally, if the
 .Ar logfile
@@ -198,6 +202,15 @@ Therefore, referring to the same log file using different pathnames can result i
 .Pp
 The matching patterns are only applied to the first line of a multi-line log message.
 However, when there is a match, all continuation lines will be output with the message.
+.Pp
+In order to avoid the race condition where
+.Nm
+reads a partially written line, if the last line of
+.Ar logfile
+does not end in a newline character, it is not processed.
+.Pp
+The maximum supported length for a single line is 100,000 characters;
+longer lines will be split and treated as multiple lines.
 .Sh RETURN VALUES
 .Nm
 exits with one of the following values:
