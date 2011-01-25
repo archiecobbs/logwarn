@@ -284,6 +284,7 @@ scan_file(const char *logfile, struct scan_state *state)
     unsigned char piped = 0;;
     unsigned char buf[3];
     char cmdbuf[PATH_MAX];
+    char *line = NULL;
     FILE *fp;
     int ch;
     int i;
@@ -322,13 +323,17 @@ scan_file(const char *logfile, struct scan_state *state)
         }
     }
 
+    // Allocate line buffer
+    if ((line = malloc(MAX_LINE_LENGTH)) == NULL)
+        err(EXIT_ERROR, "malloc: %d bytes", MAX_LINE_LENGTH);
+
     // Scan lines
     while (1) {
         unsigned char continuation;
-        char line[65536];
+        int newline = 0;
         int len;
 
-        // Read next line
+        // Read next line, or up to MAX_LINE_LENGTH of it
         for (len = 0; len < sizeof(line) - 1; ) {
             if ((ch = getc(fp)) == -1) {
                 line[len] = '\0';
@@ -336,13 +341,14 @@ scan_file(const char *logfile, struct scan_state *state)
             }
             if (ch == '\n') {
                 line[len++] = '\0';     // count newline but omit from buffer
+                newline = 1;
                 break;
             }
             line[len++] = ch;
         }
 
         // End of file?
-        if (len == 0) {
+        if (len == 0 || (len < sizeof(line) - 1 && !newline)) {
             save_state(state_file, logfile, state);
             break;
         }
@@ -378,6 +384,9 @@ scan_file(const char *logfile, struct scan_state *state)
                 printf("%s\n", line);
         }
     }
+
+    // Free buffer
+    free(line);
 
     // Close file
     if (piped) {
