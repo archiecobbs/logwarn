@@ -2,7 +2,7 @@
 /*
  * Logwarn - Utility for finding interesting messages in log files
  *
- * Copyright (C) 2010 Archie L. Cobbs. All rights reserved.
+ * Copyright (C) 2010-2011 Archie L. Cobbs. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

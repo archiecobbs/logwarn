@@ -2,7 +2,7 @@
 /*
  * Logwarn - Utility for finding interesting messages in log files
  *
- * Copyright (C) 2010 Archie L. Cobbs. All rights reserved.
+ * Copyright (C) 2010-2011 Archie L. Cobbs. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -435,7 +435,7 @@ static void
 version(void)
 {
     fprintf(stderr, "%s version %s (r%s)\n", PACKAGE_TARNAME, PACKAGE_VERSION, logwarn_svnrev);
-    fprintf(stderr, "Copyright (C) 2010 Archie L. Cobbs\n");
+    fprintf(stderr, "Copyright (C) 2010-2011 Archie L. Cobbs\n");
     fprintf(stderr, "This is free software; see the source for copying conditions.  There is NO\n");
     fprintf(stderr, "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
 }
