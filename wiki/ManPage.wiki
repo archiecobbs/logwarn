@@ -10,7 +10,7 @@ NAME
 SYNOPSIS
      logwarn [-ahnpqv] [-d dir | -f file] [-m firstpat] [-r sufpat] logfile [!]pattern ...
 
-     logwarn [-d dir | -f file] [-i] logfile
+     logwarn -i [-d dir | -f file] logfile
 
 DESCRIPTION
      logwarn searches for interesting messages in log files, where ``interesting'' is defined by an
@@ -127,5 +127,5 @@ SEE ALSO
 AUTHOR
      Archie L. Cobbs <archie@dellroad.org>
 
-BSD                                       December 28, 2010                                      BSD
+BSD                                       January 31, 2011                                       BSD
 }}}
