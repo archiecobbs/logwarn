@@ -1,5 +1,5 @@
 
-Version 1.0.3
+Version 1.0.3 (r46) Released January 31, 2011
 
     - Don't process the last line of a file if it doesn't have a newline
     - Tightend up error checking around file operations
