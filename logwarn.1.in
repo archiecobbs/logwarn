@@ -37,8 +37,8 @@
 .Pp
 .Nm logwarn
 .Bk -words
+.Fl i
 .Op Fl d Ar dir | Fl f Ar file
-.Op Fl i
 .Ar logfile
 .Ek
 .Sh DESCRIPTION
