@@ -211,6 +211,21 @@ does not end in a newline character, it is not processed.
 .Pp
 The maximum supported length for a single line is 100,000 characters;
 longer lines will be split and treated as multiple lines.
+.Sh EXAMPLES
+.Pp
+.Bl -tag -width xxx
+.It logwarn /var/log/warn
+.Pp
+Show all syslog warnings since the previous invocation.
+.Pp
+.It logwarn -p /var/log/apache2/access_log '^.* "[^"]+" 5[0-9]{2}'
+.Pp
+Show any Apache 5xx server errors since the previous invocation.
+.It logwarn -p -m '^myprog: ' '!retrying' 'ERROR'
+.Pp
+Show lines not containing `retrying' but containing `ERROR', as well as any subsequent lines in a multi-line log message,
+assuming the `myprog: ' prefix marks the start of each new log message.
+.El
 .Sh RETURN VALUES
 .Nm
 exits with one of the following values:
