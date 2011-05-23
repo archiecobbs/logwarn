@@ -19,7 +19,7 @@
 #
 
 Name:           logwarn
-Version:        1.0.4
+Version:        @PACKAGE_VERSION@
 Release:        1
 License:        Apache License, Version 2.0
 Summary:        Utility for finding interesting messages in log files
