@@ -66,6 +66,7 @@ AC_ARG_ENABLE(Werror,
 # Generated files
 AC_CONFIG_FILES(Makefile)
 AC_CONFIG_FILES(logwarn.1)
+AC_CONFIG_FILES(logwarn.spec)
 AM_CONFIG_HEADER(config.h)
 
 # Go
