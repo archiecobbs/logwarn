@@ -1,0 +1,23 @@
+#!/bin/bash
+
+. ./testutil.sh
+
+NUM_TEST="0"
+NUM_PASS="0"
+NUM_FAIL="0"
+for TEST in test[0-9][0-9][0-9][0-9]; do
+    log "${TEST} started"
+    bash "${TEST}"
+    if [ $? -eq 0 ]; then
+        log "${TEST} passed"
+        NUM_PASS=`expr ${NUM_PASS} + 1`
+    else
+        log "${TEST} FAILED"
+        NUM_FAIL=`expr ${NUM_FAIL} + 1`
+    fi
+    NUM_TEST=`expr ${NUM_TEST} + 1`
+done
+
+log "${NUM_TEST} tests run, ${NUM_PASS} succeeded, ${NUM_FAIL} failed"
+[ "${NUM_FAIL}" -eq 0 ]
+

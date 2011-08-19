@@ -1,0 +1,31 @@
+
+Version 1.0.4 (r57) Released August 18, 2011
+
+    - Fixed a bug when file is less than three bytes long (issue #2)
+    - Added some examples to the man page
+
+Version 1.0.3 (r48) Released January 31, 2011
+
+    - Don't process the last line of a file if it doesn't have a newline
+    - Tightend up error checking around file operations
+    - Improved error message output from Nagios plugin
+
+Version 1.0.2 (r34) Released December 30, 2010
+
+    - Removed the automatic implication of `-n' by `-i'
+    - Added `-a' flag to control auto-initialize behavior
+      NOTE: this changes the default behavior which previously assumed `-a'
+    - Added `-p' flag to change default match to no match
+    - Added `-f' flag to specify state file directly
+    - Added some more man page clarifications
+
+Version 1.0.1 (r14) Released December 29, 2010
+
+    - Added some man page fixes and clarifications
+    - Added a Nagios plugin
+
+Version 1.0 (r6) Released December 29, 2010
+
+    - Initial release
+
+$Id$
