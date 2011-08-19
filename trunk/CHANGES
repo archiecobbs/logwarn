@@ -1,6 +1,7 @@
 
-Version 1.0.4
+Version 1.0.4 (r57) Released August 18, 2011
 
+    - Fixed a bug when file is less than three bytes long (issue #2)
     - Added some examples to the man page
 
 Version 1.0.3 (r48) Released January 31, 2011
