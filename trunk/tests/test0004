@@ -1,0 +1,8 @@
+#!/bin/bash
+
+. testutil.sh
+cd data0004
+reset_state_file statefile logfile
+verify_output output -f statefile logfile
+verify_state_file statefile logfile 2 2 true
+
