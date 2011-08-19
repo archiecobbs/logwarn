@@ -281,7 +281,7 @@ main(int argc, char **argv)
 static void
 scan_file(const char *logfile, struct scan_state *state)
 {
-    unsigned char piped = 0;;
+    unsigned char compressed = 0;
     unsigned char buf[3];
     char cmdbuf[PATH_MAX];
     char *line = NULL;
@@ -293,20 +293,22 @@ scan_file(const char *logfile, struct scan_state *state)
     if ((fp = fopen(logfile, "r")) == NULL)
         err(EXIT_ERROR, "%s", logfile);
 
-    // Check for compressed file
-    if (fread(buf, 1, 3, fp) != 3)
+    // Check for compressed file and if so decode gzip/bzip2 on the fly
+    if (fread(buf, 3, 1, fp) == 1) {
+        if ((buf[0] == 0x1f && buf[1] == 0x8b) || (buf[0] == 'B' && buf[1] == 'Z' && buf[2] == 'h')) {
+            const char *cmd = buf[0] == 0x1f ? "gunzip" : "bunzip2";
+
+            (void)fclose(fp);
+            snprintf(cmdbuf, sizeof(cmdbuf), "%s -c '%s'", cmd, logfile);
+            if ((fp = popen(cmdbuf, "r")) == NULL)
+                err(EXIT_ERROR, "can't invoke \"%s\"", cmdbuf);
+            compressed = 1;
+        }
+    } else if (ferror(fp))
         err(EXIT_ERROR, "%s", logfile);
 
-    // Decode gzip/bzip2 on the fly
-    if ((buf[0] == 0x1f && buf[1] == 0x8b) || (buf[0] == 'B' && buf[1] == 'Z' && buf[2] == 'h')) {
-        const char *cmd = buf[0] == 0x1f ? "gunzip" : "bunzip2";
-
-        (void)fclose(fp);
-        snprintf(cmdbuf, sizeof(cmdbuf), "%s -c '%s'", cmd, logfile);
-        if ((fp = popen(cmdbuf, "r")) == NULL)
-            err(EXIT_ERROR, "can't invoke \"%s\"", cmdbuf);
-        piped = 1;
-    } else
+    // Rewind to the beginning
+    if (!compressed)
         rewind(fp);
 
     // Skip past lines already scanned
@@ -389,7 +391,7 @@ scan_file(const char *logfile, struct scan_state *state)
     free(line);
 
     // Close file
-    if (piped) {
+    if (compressed) {
         if (pclose(fp) == -1)
             err(EXIT_ERROR, "pclose: %s", logfile);
     } else {
