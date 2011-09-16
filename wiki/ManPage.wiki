@@ -8,7 +8,7 @@ NAME
      logwarn - utility for finding interesting messages in log files
 
 SYNOPSIS
-     logwarn [-ahnpqv] [-d dir | -f file] [-m firstpat] [-r sufpat] logfile [!]pattern ...
+     logwarn [-ahnpqvz] [-d dir | -f file] [-m firstpat] [-r sufpat] logfile [!]pattern ...
 
      logwarn -i [-d dir | -f file] logfile
 
@@ -31,6 +31,10 @@ DESCRIPTION
      suffix matching the rotated log file suffix pattern (see `-r' below).
 
      logwarn also includes support for log messages that span multiple lines (see `-m').
+
+     If logfile is `-' then standard input is scanned.  In this mode, multiple invocations of
+     logwarn can be pipelined together, optionally with intervening processing, to perform transfor-
+     mations of the raw log input prior to matching.  Typically used with the -z flag.
 
 OPTIONS
      -a      Auto-initialize when the state file does not exist.  This flag turns on the `-i'
@@ -86,6 +90,9 @@ OPTIONS
 
      -v      Output version information and exit.
 
+     -z      Always start reading from the beginning of the file, even if the state file says other-
+             wise.  This option is useful when reading from standard input.
+
 DETAILS
      logwarn treats missing state files as if the log file were previously empty, and it never cre-
      ates new state files for nonexistent log files.  The result is that when the -n flag is used,
@@ -116,6 +123,11 @@ EXAMPLES
      logwarn /var/log/warn
 
           Show all syslog warnings since the previous invocation.
+
+     logwarn /var/log/warn | uniq -f 5 | logwarn -
+
+          Same as above, compressing repeated instances of the same message into a single line of
+          output.
 
      logwarn -p /var/log/apache2/access_log '^.* [^ ]+" 5[0-9]{2}'
 
