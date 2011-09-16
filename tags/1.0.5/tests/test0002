@@ -1,0 +1,8 @@
+#!/bin/bash
+
+. testutil.sh
+cd data0002
+create_state_file statefile ../data0001/logfile 11 271 false
+verify_output output -pf statefile -m ^START: logfile error
+verify_state_file statefile logfile 5 103 false
+

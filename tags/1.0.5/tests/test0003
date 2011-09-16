@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Test handling of unterminated last line
+
+. testutil.sh
+cd data0003
+rm -f statefile logfile
+cp logfile.base logfile
+reset_state_file statefile logfile
+
+verify_output output1 -f statefile logfile
+verify_state_file statefile logfile 2 17 true
+
+verify_output /dev/null -f statefile logfile
+verify_state_file statefile logfile 2 17 true
+
+echo ' with new ending' >> logfile
+verify_output output2 -f statefile logfile
+verify_state_file statefile logfile 3 49 true
