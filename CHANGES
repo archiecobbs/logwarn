@@ -1,5 +1,5 @@
 
-Version Next
+Version 1.0.5 (r64) Released September 15, 2011
 
     - Added the ability to scan standard input
     - Added `-z' flag to always read from the beginning
