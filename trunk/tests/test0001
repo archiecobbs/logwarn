@@ -2,7 +2,14 @@
 
 . testutil.sh
 cd data0001
+
+# Scan entire file
 reset_state_file statefile logfile
 verify_output output -p -f statefile -m ^START: logfile error
+verify_state_file statefile logfile 11 271 false
+
+# Scan file starting at line #3
+create_state_file statefile logfile 3 48
+verify_output output2 -p -f statefile -m ^START: logfile error
 verify_state_file statefile logfile 11 271 false
 
