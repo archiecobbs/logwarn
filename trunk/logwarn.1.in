@@ -27,7 +27,7 @@
 .Sh SYNOPSIS
 .Nm logwarn
 .Bk -words
-.Op Fl ahnpqv
+.Op Fl ahnpqvz
 .Op Fl d Ar dir | Fl f Ar file
 .Op Fl m Ar firstpat
 .Op Fl r Ar sufpat
@@ -71,6 +71,17 @@ followed by a suffix matching the rotated log file suffix pattern (see `-r' belo
 .Pp
 .Nm
 also includes support for log messages that span multiple lines (see `-m').
+.Pp
+If
+.Ar logfile
+is `-' then standard input is scanned.
+In this mode, multiple invocations of
+.Nm
+can be pipelined together, optionally with intervening processing, to perform
+transformations of the raw log input prior to matching.
+Typically used with the
+.Fl z
+flag.
 .Sh OPTIONS
 .Bl -tag -width Ds
 .It Fl a
@@ -164,6 +175,9 @@ The default rotated log file suffix pattern is
 .Pa ^(-[[:digit:]]{8}|\e\.[01])(\e\.(gz|bz2))?$
 .It Fl v
 Output version information and exit.
+.It Fl z
+Always start reading from the beginning of the file, even if the state file says otherwise.
+This option is useful when reading from standard input.
 .El
 .Sh DETAILS
 .Nm
@@ -217,6 +231,10 @@ longer lines will be split and treated as multiple lines.
 .It logwarn /var/log/warn
 .Pp
 Show all syslog warnings since the previous invocation.
+.Pp
+.It logwarn /var/log/warn | uniq -f 5 | logwarn -
+.Pp
+Same as above, compressing repeated instances of the same message into a single line of output.
 .Pp
 .It logwarn -p /var/log/apache2/access_log '^.* "[^"]+" 5[0-9]{2}'
 .Pp

@@ -1,4 +1,9 @@
 
+Version Next
+
+    - Added the ability to scan standard input
+    - Added `-z' flag to always read from the beginning
+
 Version 1.0.4 (r57) Released August 18, 2011
 
     - Fixed a bug when file is less than three bytes long (issue #2)
