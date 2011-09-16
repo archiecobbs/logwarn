@@ -51,7 +51,7 @@ create_state_file()
         matching="false"
     fi
     local inode=`get_inode "${logfile}"`
-    printf 'INODENUM="%d"\nLINENUM="%d"\nPOSITION="%d"MATCHING="%s"\n' \
+    printf 'INODENUM="%d"\nLINENUM="%d"\nPOSITION="%d"\nMATCHING="%s"\n' \
       "${inode}" "${linenum}" "${position}" "${matching}" > "${statefile}"
 }
 
