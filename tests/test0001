@@ -13,3 +13,8 @@ create_state_file statefile logfile 3 48
 verify_output output2 -p -f statefile -m ^START: logfile error
 verify_state_file statefile logfile 11 271 false
 
+# Scan file from the beginning but with the state file starting at line #3
+create_state_file statefile logfile 3 48
+verify_output output -zp -f statefile -m ^START: logfile error
+verify_state_file statefile logfile 11 271 false
+

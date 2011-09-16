@@ -61,6 +61,7 @@ static struct repat rot_pattern;
 static int          default_match = 1;
 static int          auto_initialize;
 static int          num_match_patterns;
+static int          read_from_beginning;
 static int          quiet;
 static int          any_matches;
 static struct repat *match_patterns;
@@ -83,7 +84,7 @@ main(int argc, char **argv)
     int i;
 
     // Parse command line
-    while ((i = getopt(argc, argv, "ad:f:him:npqr:v")) != -1) {
+    while ((i = getopt(argc, argv, "ad:f:him:npqr:vz")) != -1) {
         switch (i) {
         case 'a':
             auto_initialize = 1;
@@ -115,6 +116,9 @@ main(int argc, char **argv)
         case 'q':
             quiet = 1;
             break;
+        case 'z':
+            read_from_beginning = 1;
+            break;
         case 'v':
             version();
             exit(EXIT_OK);
@@ -132,6 +136,8 @@ main(int argc, char **argv)
         exit(EXIT_ERROR);
     default:
         logfile = argv[0];
+        if (strcmp(logfile, "-") == 0)
+            logfile = NULL;
         argv++;
         argc--;
         num_match_patterns = argc;
@@ -176,7 +182,7 @@ main(int argc, char **argv)
     state.line = 1;
 
     // Check if logfile exists
-    if (stat(logfile, &sb) == -1) {
+    if (logfile != NULL && stat(logfile, &sb) == -1) {
         switch (errno) {
         case ENOENT:
         case ENOTDIR:
@@ -203,9 +209,15 @@ main(int argc, char **argv)
     if (load_state(state_file, &state) == -1 && auto_initialize)
         init_state_from_logfile(logfile, &state);
 
+    // Read from beginning?
+    if (read_from_beginning) {
+        state.line = 1;
+        state.pos = 0;
+    }
+
     // Has log file rotated since we last checked?
     // If so, scan the rotated file first
-    if (sb.st_ino != state.inode) {
+    if (logfile != NULL && sb.st_ino != state.inode) {
         char *rotated = NULL;
         char *dname;
         char *bname;
@@ -290,25 +302,29 @@ scan_file(const char *logfile, struct scan_state *state)
     int i;
 
     // Open file
-    if ((fp = fopen(logfile, "r")) == NULL)
+    if (logfile == NULL)
+        fp = stdin;
+    else if ((fp = fopen(logfile, "r")) == NULL)
         err(EXIT_ERROR, "%s", logfile);
 
     // Check for compressed file and if so decode gzip/bzip2 on the fly
-    if (fread(buf, 3, 1, fp) == 1) {
-        if ((buf[0] == 0x1f && buf[1] == 0x8b) || (buf[0] == 'B' && buf[1] == 'Z' && buf[2] == 'h')) {
-            const char *cmd = buf[0] == 0x1f ? "gunzip" : "bunzip2";
+    if (logfile != NULL) {
+        if (fread(buf, 3, 1, fp) == 1) {
+            if ((buf[0] == 0x1f && buf[1] == 0x8b) || (buf[0] == 'B' && buf[1] == 'Z' && buf[2] == 'h')) {
+                const char *cmd = buf[0] == 0x1f ? "gunzip" : "bunzip2";
 
-            (void)fclose(fp);
-            snprintf(cmdbuf, sizeof(cmdbuf), "%s -c '%s'", cmd, logfile);
-            if ((fp = popen(cmdbuf, "r")) == NULL)
-                err(EXIT_ERROR, "can't invoke \"%s\"", cmdbuf);
-            compressed = 1;
-        }
-    } else if (ferror(fp))
-        err(EXIT_ERROR, "%s", logfile);
+                (void)fclose(fp);
+                snprintf(cmdbuf, sizeof(cmdbuf), "%s -c '%s'", cmd, logfile);
+                if ((fp = popen(cmdbuf, "r")) == NULL)
+                    err(EXIT_ERROR, "can't invoke \"%s\"", cmdbuf);
+                compressed = 1;
+            }
+        } else if (ferror(fp))
+            err(EXIT_ERROR, "%s", logfile);
+    }
 
     // Rewind to the beginning
-    if (!compressed)
+    if (logfile != NULL && !compressed)
         rewind(fp);
 
     // Skip past lines already scanned
@@ -395,7 +411,7 @@ scan_file(const char *logfile, struct scan_state *state)
         if (pclose(fp) == -1)
             err(EXIT_ERROR, "pclose: %s", logfile);
     } else {
-        if (fclose(fp) == EOF)
+        if (logfile != NULL && fclose(fp) == EOF)
             err(EXIT_ERROR, "fclose: %s", logfile);
     }
 }
@@ -431,6 +447,8 @@ usage(void)
     fprintf(stderr, "  -q    Don't output the matched log messages\n");
     fprintf(stderr, "  -r    Specify rotated file suffix pattern; default \"%s\"\n", DEFAULT_ROTPAT);
     fprintf(stderr, "  -v    Output version information and exit\n");
+    fprintf(stderr, "  -z    Always read from the beginning of the input\n");
+    fprintf(stderr, "A logfile of `-' means read from standard input (typically used with `-z')\n");
 }
 
 static void

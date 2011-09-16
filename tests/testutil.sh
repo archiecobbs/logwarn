@@ -22,6 +22,10 @@ errout()
 get_inode()
 {
     local file="$1"
+    if [ "${file}" = "-" ]; then
+        echo 0
+        return
+    fi
     case `uname -s` in
         *BSD|Darwin)
             statfmt="-f %i"

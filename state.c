@@ -36,10 +36,11 @@
 #include "logwarn.h"
 
 // Definitions
-#define INODENUM_NAME   "INODENUM"
-#define LINENUM_NAME    "LINENUM"
-#define POSITION_NAME   "POSITION"
-#define MATCHING_NAME   "MATCHING"
+#define INODENUM_NAME       "INODENUM"
+#define LINENUM_NAME        "LINENUM"
+#define POSITION_NAME       "POSITION"
+#define MATCHING_NAME       "MATCHING"
+#define STDIN_LOGFILE_NAME  "_stdin"
 
 int
 load_state(const char *state_file, struct scan_state *state)
@@ -121,6 +122,14 @@ save_state(const char *state_file, const char *logfile, const struct scan_state 
 void
 dump_state(FILE *fp, const char *logfile, const struct scan_state *state)
 {
+    struct scan_state stdin_state;
+
+    if (logfile == NULL) {
+        logfile = STDIN_LOGFILE_NAME;
+        stdin_state = *state;
+        stdin_state.inode = 0;
+        state = &stdin_state;
+    }
     fprintf(fp, "# %s %s state for \"%s\"\n", PACKAGE_TARNAME, PACKAGE_VERSION, logfile);
     fprintf(fp, "%s=\"%lu\"\n", INODENUM_NAME, (unsigned long)state->inode);
     fprintf(fp, "%s=\"%lu\"\n", LINENUM_NAME, state->line);
@@ -137,6 +146,8 @@ init_state_from_logfile(const char *logfile, struct scan_state *state)
 
     memset(state, 0, sizeof(*state));
     state->line = 1;
+    if (logfile == NULL)
+        return;
     if (stat(logfile, &sb) == -1)
         err(EXIT_ERROR, "%s", logfile);
     if (S_ISDIR(sb.st_mode & S_IFMT)) {
@@ -159,6 +170,10 @@ state_file_name(const char *state_dir, const char *logfile, char *buf, size_t ma
 {
     int i;
 
+    if (logfile == NULL) {
+        snprintf(buf, max, "%s", STDIN_LOGFILE_NAME);
+        return;
+    }
     snprintf(buf, max, "%s/", state_dir);
     while (*logfile == '/')
         logfile++;
