@@ -1,0 +1,20 @@
+#!/bin/bash
+
+. testutil.sh
+cd data0005
+
+# Scan entire file
+reset_state_file statefile -
+cat logfile | verify_output output -p -f statefile -m ^START: - error
+verify_state_file statefile - 11 271 false
+
+# Scan file starting at line #3
+create_state_file statefile - 3 48
+cat logfile | verify_output output2 -p -f statefile -m ^START: - error
+verify_state_file statefile - 11 271 false
+
+# Scan file from the beginning but with the state file starting at line #3
+create_state_file statefile - 3 48
+cat logfile | verify_output output -zp -f statefile -m ^START: - error
+verify_state_file statefile - 11 271 false
+
