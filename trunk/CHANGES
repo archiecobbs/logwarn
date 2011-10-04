@@ -1,4 +1,8 @@
 
+Version Next
+
+    - Fix misuse of '|' character in Nagios plugin output
+
 Version 1.0.5 (r64) Released September 15, 2011
 
     - Added the ability to scan standard input
