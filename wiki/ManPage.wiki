@@ -14,33 +14,37 @@ SYNOPSIS
 
 DESCRIPTION
      logwarn searches for interesting messages in log files, where ``interesting'' is defined by an
-     user-supplied list of positive and negative (preceeded with a ``!'') extended regular expres-
-     sions provided on the command line.
+     user-supplied list of positive and negative extended regular expressions provided on the com-
+     mand line.
 
-     Each log message is compared against each pattern in the order given.  If the log message
-     matches a positive pattern before matching a negative !pattern, or if none of the patterns
-     match, then it's printed to standard output.
+     Each log message is compared against each pattern in the order given.  Negative patterns are
+     specified with a ``!'' prefix.  If the log message matches a positive pattern before matching a
+     negative !pattern, or if none of the patterns match, then it's printed to standard output.
 
-     logwarn keeps track of its position between invocations, so each matching line is only ever
-     output once.  This information is kept in a separate `state file' corresponding to each log
-     file.  logwarn interprets a missing state file as if the file were previously empty, resulting
-     in a scan of its entire contents (but see `-a' and `-i' below).
+     logwarn keeps track of its current position in the log file between invocations, so each match-
+     ing line is only ever output once.  This information is kept in a separate `state file' (see
+     the -d and -f flags below).  By default, logwarn interprets a missing state file as if the file
+     were previously empty, resulting in a scan of its entire contents; this behavior can be changed
+     with the -a and -i flags.
 
      logwarn will find messages in log files that have been rotated (and possibly compressed) since
      the previous invocation, as long as the rotated file has a name equal to logfile followed by a
-     suffix matching the rotated log file suffix pattern (see `-r' below).
+     suffix matching the rotated log file suffix pattern (see the -r flag below).
 
-     logwarn also includes support for log messages that span multiple lines (see `-m').
+     By default, each line in the log file is considered to be a separate log message.  Log messages
+     spanning multiple lines are supported with the use of the -m flag.
 
      If logfile is `-' then standard input is scanned.  In this mode, multiple invocations of
      logwarn can be pipelined together, optionally with intervening processing, to perform transfor-
-     mations of the raw log input prior to matching.  Typically used with the -z flag.
+     mations of the raw log input prior to matching.  Typically the -z flag is used in this sce-
+     nario.
 
 OPTIONS
-     -a      Auto-initialize when the state file does not exist.  This flag turns on the `-i'
-             intialization behavior in cases where logfile exists but the state file does not.  Nor-
-             mally this is not what you want, but this can be helpful in cases where it's important
-             to avoid a flood of repeated log messages caused by state files being deleted somehow.
+     -a      Auto-initialize when the state file does not exist.  This flag turns on the -i intial-
+             ization behavior in cases where logfile exists but the state file does not.  Normally
+             this is not what you want, but this can be helpful in cases where it's important to
+             avoid a flood of repeated log messages caused by state files somehow disappearing
+             between invocations.
 
      -d      Specify dir as the directory in which logwarn will store state information between
              invocations.  When this flag is used, the name of the state file is automatically gen-
@@ -72,9 +76,9 @@ OPTIONS
      -n      Normally, if the logfile does not exist, logwarn will exit with an error.  This flag
              causes logwarn to treat a non-existent logfile as if it were empty.
 
-     -p      Change default match behavior to negative.  By default, if a log message doesn't match
-             any of the positive or negative patterns, it is considered a match.  This flag reverses
-             this behavior so that these messages are considered non-matches.
+     -p      Change default match behavior to non-matching.  By default, if a log message doesn't
+             match any of the positive or negative patterns, it is considered a match.  This flag
+             reverses this behavior so that these messages are considered non-matches.
 
      -q      Disable the printing of matching log messages to standard output.  The process exit
              value can still be used to detect whether there were any matches (see below).
@@ -111,7 +115,8 @@ DETAILS
      referring to the same log file using different pathnames can result in inconsistent behavior.
 
      The matching patterns are only applied to the first line of a multi-line log message.  However,
-     when there is a match, all continuation lines will be output with the message.
+     if the first line is a match, then entire log message including all continuation lines will be
+     output.
 
      In order to avoid the race condition where logwarn reads a partially written line, if the last
      line of logfile does not end in a newline character, it is not processed.
