@@ -1,5 +1,5 @@
 
-Version Next
+Version 1.0.6 (r72) Released October 4, 2011
 
     - Fix misuse of '|' character in Nagios plugin output
 
