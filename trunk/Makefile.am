@@ -26,7 +26,7 @@ man_MANS=		logwarn.1
 
 docdir=			$(datadir)/doc/packages/$(PACKAGE)
 
-doc_DATA=		CHANGES COPYING README INSTALL
+doc_DATA=		CHANGES COPYING README INSTALL AUTHORS
 
 plugindir=		$(prefix)/lib/nagios/plugins
 
