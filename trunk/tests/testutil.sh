@@ -18,7 +18,13 @@ errout()
     exit 1
 }
 
-# Get file's inode
+#
+# Get a file's inode.
+#
+# Usage: get_inode filename
+#
+# Returns zero for `-'.
+#
 get_inode()
 {
     local file="$1"
@@ -37,7 +43,11 @@ get_inode()
     stat ${statfmt} "${file}"
 }
 
-# Create a state file 
+#
+# Create a state file
+#
+# Usage: create_state_file filename logfile [ linenum [ position [ matching ] ] ]
+#
 create_state_file()
 {
     local statefile="$1"
@@ -59,13 +69,21 @@ create_state_file()
       "${inode}" "${linenum}" "${position}" "${matching}" > "${statefile}"
 }
 
+#
 # Create a state file for an empty file
+#
+# Usage: reset_state_file filename logfile
+#
 reset_state_file()
 {
     create_state_file "$1" "$2"
 }
 
+#
 # Verify a string
+#
+# Usage: verify_value name expected actual
+#
 verify_value()
 {
     local name="$1"
@@ -74,7 +92,11 @@ verify_value()
     [ "${actual}" = "${expected}" ] || errout "ERROR: mismatch for ${name}: expected '${expected}' but got '${actual}'"
 }
 
+#
 # Verify a state file
+#
+# Usage: verify_state_file statefile logfile linenum position matching
+#
 verify_state_file()
 {
     local statefile="$1"
@@ -90,7 +112,11 @@ verify_state_file()
     verify_value MATCHING "${matching}" "${MATCHING}"
 }
 
+#
 # Verify expected output
+#
+# Usage: verify_output expected-output logwarn-params ...
+#
 verify_output()
 {
     local expected="$1"

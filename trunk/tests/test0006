@@ -1,0 +1,21 @@
+#!/bin/bash
+
+. testutil.sh
+cd data0006
+
+# Start with logfile1
+cp logfile.1 logfile
+reset_state_file statefile logfile
+
+# Scan original file
+verify_output logfile.1 -n -f statefile logfile
+verify_state_file statefile logfile 4 45 true
+
+# Put new file in place
+rm logfile
+cp logfile.2 logfile
+
+# Scan new file
+verify_output logfile.2 -n -f statefile logfile
+verify_state_file statefile logfile 4 45 true
+
