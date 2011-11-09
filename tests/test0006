@@ -12,8 +12,9 @@ verify_output logfile.1 -n -f statefile logfile
 verify_state_file statefile logfile 4 45 true
 
 # Put new file in place
-rm logfile
+mv logfile logfile.old
 cp logfile.2 logfile
+rm logfile.old
 
 # Scan new file
 verify_output logfile.2 -n -f statefile logfile
