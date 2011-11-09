@@ -41,6 +41,7 @@ AC_DEFINE(_DARWIN_C_SOURCE, 1, MacOS functions)
 # Check for required programs
 AC_PROG_INSTALL
 AC_PROG_CC
+AC_PATH_PROG([GETCONF], [getconf], [], [])
 
 # Check for required header files
 AC_HEADER_STDC
@@ -62,6 +63,12 @@ AC_ARG_ENABLE(Werror,
     AC_HELP_STRING([--enable-Werror],
         [enable compilation with -Werror flag (default NO)]),
     [test x"$enableval" = "xyes" && CFLAGS="${CFLAGS} -Werror"])
+
+# Large file support
+if test -n "${GETCONF}"; then
+    CFLAGS="${CFLAGS} `${GETCONF} LFS_CFLAGS`"
+    LDFLAGS="${LDFLAGS} `${GETCONF} LFS_LDFLAGS`"
+fi
 
 # Generated files
 AC_CONFIG_FILES(Makefile)
