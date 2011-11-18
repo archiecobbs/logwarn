@@ -1,4 +1,8 @@
 
+Version 1.0.8
+
+    - Portability fixes for Solaris
+
 Version 1.0.7 (r80) Released November 10, 2011
 
     - Add large file support (issue #3)
