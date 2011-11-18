@@ -45,9 +45,8 @@ AC_PATH_PROG([GETCONF], [getconf], [], [])
 
 # Check for required header files
 AC_HEADER_STDC
-AC_CHECK_HEADERS(ctype.h dirent.h err.h errno.h libgen.h limits.h regex.h stdio.h stdlib.h string.h unistd.h sys/stat.h sys/types.h, [],
+AC_CHECK_HEADERS(ctype.h dirent.h errno.h libgen.h limits.h regex.h stdio.h stdlib.h string.h unistd.h sys/stat.h sys/types.h, [],
         [AC_MSG_ERROR([required header file '$ac_header' missing])])
-
 
 # Cache directory
 [DEFAULT_CACHE_DIR="/var/lib/logwarn"]

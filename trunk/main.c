@@ -26,7 +26,6 @@
 
 #include <ctype.h>
 #include <dirent.h>
-#include <err.h>
 #include <errno.h>
 #include <libgen.h>
 #include <limits.h>
@@ -146,8 +145,10 @@ main(int argc, char **argv)
             exit(EXIT_ERROR);
         }
         if (num_match_patterns > 0) {
-            if ((match_patterns = malloc(num_match_patterns * sizeof(*match_patterns))) == NULL)
-                err(EXIT_ERROR, "malloc");
+            if ((match_patterns = malloc(num_match_patterns * sizeof(*match_patterns))) == NULL) {
+                fprintf(stderr, "%s: %s: %s\n", PACKAGE, "malloc", strerror(errno));
+                exit(EXIT_ERROR);
+            }
             memset(match_patterns, 0, num_match_patterns * sizeof(*match_patterns));
             for (i = 0; i < num_match_patterns; i++) {
                 struct repat *const pat = &match_patterns[i];
@@ -164,13 +165,17 @@ main(int argc, char **argv)
     }
 
     // Check "-d" vs. "-f" and determine state file
-    if (state_dir != NULL && state_file != NULL)
-        errx(EXIT_ERROR, "specify only one of `-d' and `-f'");
+    if (state_dir != NULL && state_file != NULL) {
+        fprintf(stderr, "%s: specify only one of `-d' and `-f'\n", PACKAGE);
+        exit(EXIT_ERROR);
+    }
     if (state_file == NULL) {
         if (state_dir == NULL)
             state_dir = DEFAULT_STATE_DIR;
-        if ((state_file = malloc(PATH_MAX)) == NULL)
-            err(EXIT_ERROR, "malloc");
+        if ((state_file = malloc(PATH_MAX)) == NULL) {
+            fprintf(stderr, "%s: %s: %s\n", PACKAGE, "malloc", strerror(errno));
+            exit(EXIT_ERROR);
+        }
         state_file_name(state_dir, logfile, state_file, PATH_MAX);
     }
 
@@ -191,7 +196,8 @@ main(int argc, char **argv)
                 exit(EXIT_OK);
             // FALLTHROUGH
         default:
-            err(EXIT_ERROR, "%s", logfile);
+            fprintf(stderr, "%s: %s: %s\n", PACKAGE, logfile, strerror(errno));
+            exit(EXIT_ERROR);
         }
     }
 
@@ -225,11 +231,15 @@ main(int argc, char **argv)
         DIR *dir;
 
         // Get directory and filename of file containing logfile
-        if ((temp = strdup(logfile)) == NULL || (bname = strdup(basename(temp))) == NULL)
-            err(EXIT_ERROR, "strdup");
+        if ((temp = strdup(logfile)) == NULL || (bname = strdup(basename(temp))) == NULL) {
+            fprintf(stderr, "%s: %s: %s\n", PACKAGE, "strdup", strerror(errno));
+            exit(EXIT_ERROR);
+        }
         free(temp);
-        if ((temp = strdup(logfile)) == NULL || (dname = strdup(dirname(temp))) == NULL)
-            err(EXIT_ERROR, "strdup");
+        if ((temp = strdup(logfile)) == NULL || (dname = strdup(dirname(temp))) == NULL) {
+            fprintf(stderr, "%s: %s: %s\n", PACKAGE, "strdup", strerror(errno));
+            exit(EXIT_ERROR);
+        }
         free(temp);
 
         // Search for rotated version in same directory
@@ -253,8 +263,10 @@ main(int argc, char **argv)
 
                 // It's a candidate. Pick the first one in sorting order.
                 if (rotated == NULL || strcmp(ent->d_name, rotated) < 0) {
-                    if ((rotated = realloc(rotated, strlen(ent->d_name) + 1)) == NULL)
-                        err(EXIT_ERROR, "realloc");
+                    if ((rotated = realloc(rotated, strlen(ent->d_name) + 1)) == NULL) {
+                        fprintf(stderr, "%s: %s: %s\n", PACKAGE, "realloc", strerror(errno));
+                        exit(EXIT_ERROR);
+                    }
                     strcpy(rotated, ent->d_name);
                 }
             }
@@ -304,8 +316,10 @@ scan_file(const char *logfile, struct scan_state *state)
     // Open file
     if (logfile == NULL)
         fp = stdin;
-    else if ((fp = fopen(logfile, "r")) == NULL)
-        err(EXIT_ERROR, "%s", logfile);
+    else if ((fp = fopen(logfile, "r")) == NULL) {
+        fprintf(stderr, "%s: %s: %s\n", PACKAGE, logfile, strerror(errno));
+        exit(EXIT_ERROR);
+    }
 
     // Check for compressed file and if so decode gzip/bzip2 on the fly
     if (logfile != NULL) {
@@ -315,12 +329,16 @@ scan_file(const char *logfile, struct scan_state *state)
 
                 (void)fclose(fp);
                 snprintf(cmdbuf, sizeof(cmdbuf), "%s -c '%s'", cmd, logfile);
-                if ((fp = popen(cmdbuf, "r")) == NULL)
-                    err(EXIT_ERROR, "can't invoke \"%s\"", cmdbuf);
+                if ((fp = popen(cmdbuf, "r")) == NULL) {
+                    fprintf(stderr, "%s: can't invoke \"%s\": %s\n", PACKAGE, cmdbuf, strerror(errno));
+                    exit(EXIT_ERROR);
+                }
                 compressed = 1;
             }
-        } else if (ferror(fp))
-            err(EXIT_ERROR, "%s", logfile);
+        } else if (ferror(fp)) {
+            fprintf(stderr, "%s: %s: %s\n", PACKAGE, logfile, strerror(errno));
+            exit(EXIT_ERROR);
+        }
     }
 
     // Rewind to the beginning
@@ -342,8 +360,10 @@ scan_file(const char *logfile, struct scan_state *state)
     }
 
     // Allocate line buffer
-    if ((line = malloc(MAX_LINE_LENGTH)) == NULL)
-        err(EXIT_ERROR, "malloc: %d bytes", MAX_LINE_LENGTH);
+    if ((line = malloc(MAX_LINE_LENGTH)) == NULL) {
+        fprintf(stderr, "%s: %s: %s\n", PACKAGE, "malloc", strerror(errno));
+        exit(EXIT_ERROR);
+    }
 
     // Scan lines
     while (1) {
@@ -408,11 +428,15 @@ scan_file(const char *logfile, struct scan_state *state)
 
     // Close file
     if (compressed) {
-        if (pclose(fp) == -1)
-            err(EXIT_ERROR, "pclose: %s", logfile);
+        if (pclose(fp) == -1) {
+            fprintf(stderr, "%s: %s: %s: %s\n", PACKAGE, "pclose", logfile, strerror(errno));
+            exit(EXIT_ERROR);
+        }
     } else {
-        if (logfile != NULL && fclose(fp) == EOF)
-            err(EXIT_ERROR, "fclose: %s", logfile);
+        if (logfile != NULL && fclose(fp) == EOF) {
+            fprintf(stderr, "%s: %s: %s: %s\n", PACKAGE, "fclose", logfile, strerror(errno));
+            exit(EXIT_ERROR);
+        }
     }
 }
 
@@ -424,7 +448,7 @@ parse_pattern(struct repat *pat, const char *string)
 
     if ((r = regcomp(&pat->regex, string, REG_EXTENDED|REG_NOSUB)) != 0) {
         regerror(r, &pat->regex, ebuf, sizeof(ebuf));
-        warnx("invalid regular expression \"%s\": %s", string, ebuf);
+        fprintf(stderr, "%s: invalid regular expression \"%s\": %s", PACKAGE, string, ebuf);
         exit(EXIT_ERROR);
     }
     pat->string = string;
