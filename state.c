@@ -25,7 +25,6 @@
 #include <sys/stat.h>
 
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -89,7 +88,7 @@ load_state(const char *state_file, struct scan_state *state)
 
         // Decode numerical value
         if (((value = strtoul(fvalue, &eptr, 10)) == ULONG_MAX && errno == ERANGE) || *eptr != '\0') {
-            warnx("can't decode value \"%s\" for \"%s\"", fvalue, fname);
+            fprintf(stderr, "%s: can't decode value \"%s\" for \"%s\"", PACKAGE, fvalue, fname);
             continue;
         }
 
@@ -112,11 +111,15 @@ save_state(const char *state_file, const char *logfile, const struct scan_state 
 {
     FILE *fp;
 
-    if ((fp = fopen(state_file, "w")) == NULL)
-        err(EXIT_ERROR, "%s", state_file);
+    if ((fp = fopen(state_file, "w")) == NULL) {
+        fprintf(stderr, "%s: %s: %s\n", PACKAGE, state_file, strerror(errno));
+        exit(EXIT_ERROR);
+    }
     dump_state(fp, logfile, state);
-    if (fclose(fp) == EOF)
-        err(EXIT_ERROR, "%s", state_file);
+    if (fclose(fp) == EOF) {
+        fprintf(stderr, "%s: %s: %s\n", PACKAGE, state_file, strerror(errno));
+        exit(EXIT_ERROR);
+    }
 }
 
 void
@@ -148,15 +151,19 @@ init_state_from_logfile(const char *logfile, struct scan_state *state)
     state->line = 1;
     if (logfile == NULL)
         return;
-    if (stat(logfile, &sb) == -1)
-        err(EXIT_ERROR, "%s", logfile);
+    if (stat(logfile, &sb) == -1) {
+        fprintf(stderr, "%s: %s: %s\n", PACKAGE, logfile, strerror(errno));
+        exit(EXIT_ERROR);
+    }
     if (S_ISDIR(sb.st_mode & S_IFMT)) {
-        errno = EISDIR;
-        err(EXIT_ERROR, "%s", logfile);
+        fprintf(stderr, "%s: %s: %s\n", PACKAGE, logfile, strerror(EISDIR));
+        exit(EXIT_ERROR);
     }
     state->inode = sb.st_ino;
-    if ((fp = fopen(logfile, "r")) == NULL)
-        err(EXIT_ERROR, "%s", logfile);
+    if ((fp = fopen(logfile, "r")) == NULL) {
+        fprintf(stderr, "%s: %s: %s\n", PACKAGE, logfile, strerror(errno));
+        exit(EXIT_ERROR);
+    }
     while ((ch = getc(fp)) != EOF) {
         state->pos++;
         if (ch == '\n')
