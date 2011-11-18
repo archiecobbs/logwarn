@@ -27,7 +27,7 @@ struct scan_state {
     ino_t           inode;          // file inode number
     unsigned long   line;           // # lines read + 1
     long            pos;            // seek position in file
-    u_char          matching;       // within matching entry
+    unsigned char   matching;       // within matching entry
 };
 
 // Exit values

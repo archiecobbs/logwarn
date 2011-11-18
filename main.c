@@ -50,7 +50,7 @@
 struct repat {
     const char      *string;
     regex_t         regex;
-    u_char          negate;
+    unsigned char   negate;
 };
 
 // Global variables
