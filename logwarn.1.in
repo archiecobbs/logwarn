@@ -241,6 +241,11 @@ does not end in a newline character, it is not processed.
 .Pp
 The maximum supported length for a single line is 100,000 characters;
 longer lines will be split and treated as multiple lines.
+.Pp
+If
+.Nm
+detects that a file's inode has not changed but its size has decreased since the previous invocation,
+it assumes that the file has been truncated in place and scans from the beginning of the file.
 .Sh EXAMPLES
 .Pp
 .Bl -tag -width xxx
