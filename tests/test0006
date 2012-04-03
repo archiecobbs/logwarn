@@ -20,3 +20,5 @@ rm logfile.old
 verify_output logfile.2 -n -f statefile logfile
 verify_state_file statefile logfile 4 45 true
 
+# Clean up
+rm -f statefile logfile
