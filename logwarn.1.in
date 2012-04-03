@@ -244,7 +244,7 @@ longer lines will be split and treated as multiple lines.
 .Pp
 If
 .Nm
-detects that a file's inode has not changed but its size has decreased since the previous invocation,
+detects that a file's inode number has not changed but its size has decreased since the previous invocation,
 it assumes that the file has been truncated in place and scans from the beginning of the file.
 .Sh EXAMPLES
 .Pp
