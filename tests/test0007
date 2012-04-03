@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Test handling of truncated log file
+
+# Start with original log file
+. testutil.sh
+cd data0007
+rm -f statefile logfile
+cp logfile.A logfile
+
+# Scan it - should see original stuff
+verify_output logfile.A -f statefile logfile
+verify_state_file statefile logfile 4 78 true
+
+# Truncate original and add some new stuff, leaving it shorter than before
+cat logfile.B > logfile
+
+# Scan it again - should see new stuff
+verify_output logfile.B -f statefile logfile
+verify_state_file statefile logfile 2 29 true
+
+# Clean up
+rm -f statefile logfile
