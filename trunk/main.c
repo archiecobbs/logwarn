@@ -292,6 +292,13 @@ main(int argc, char **argv)
         state.pos = 0;
     }
 
+    // Check whether the file has been truncated in place
+    if (logfile != NULL && state.pos > (long)sb.st_size) {
+        state.line = 1;
+        state.pos = 0;
+        state.matching = 0;
+    }
+
     // Now scan the logfile itself
     scan_file(logfile, &state);
 

@@ -1,6 +1,7 @@
 
 Version 1.0.8
 
+    - Properly handle truncated files (issue #7)
     - Portability fixes for Solaris
 
 Version 1.0.7 (r80) Released November 10, 2011
