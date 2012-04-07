@@ -1,5 +1,5 @@
 
-Version 1.0.8
+Version 1.0.8 (r88) Released April 7, 2012
 
     - Properly handle truncated files (issue #7)
     - Portability fixes for Solaris
