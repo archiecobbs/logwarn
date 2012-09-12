@@ -1,4 +1,8 @@
 
+Version 1.0.9
+
+    - Nagios plugin fixes: fix '-h' flag and unportable sed(1) usage
+
 Version 1.0.8 (r88) Released April 7, 2012
 
     - Properly handle truncated files (issue #7)
