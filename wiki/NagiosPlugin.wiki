@@ -8,10 +8,12 @@ The following settings are suggested when configuring a Nagios check to use *che
 {{{
    is_volatile            1
    max_check_attempts     1
+   flap_detection_enabled 0
    notification_options   w,u,c
 }}}
 
 Exaplanation:
   * The `is_volatile` setting is because each time *check_logwarn* runs, it updates its remembered position in the log file, and so automatically resets itself. See the [http://nagios.sourceforge.net/docs/3_0/volatileservices.html Nagios documentation] for more info.
   * Setting `max_check_attempts` to `1` is required because the next check after a failed check will always be successful (unless additional errors have been logged). This is because *check_logwarn* automatically advances its position past the error each time. Therefore the consecutive failed check count will get reset back to zero and never attain a `max_check_attempts` value greater than one, causing no notification to be sent out by Nagios, even though an error was detected. In Nagios terminology, the error condition will never go from 'soft' to 'hard'.
+  * Turning off `flap_detection_enabled` is good because by virtue of its automatically resetting, logwarn "flaps" every time.
   * Omitting the `r` (for recovery) option from `notification_options` is appropriate because "recovery" for *check_logwarn* is not meaningful: it always recovers automatically.
