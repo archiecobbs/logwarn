@@ -5,7 +5,7 @@
 LOGWARN(1)                           BSD General Commands Manual                          LOGWARN(1)
 
 NAME
-     logwarn - utility for finding interesting messages in log files
+     logwarn -- utility for finding interesting messages in log files
 
 SYNOPSIS
      logwarn [-ahnpqvz] [-d dir | -f file] [-m firstpat] [-r sufpat] logfile [!]pattern ...
