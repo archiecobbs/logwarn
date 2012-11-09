@@ -6,15 +6,16 @@ STATE_OK=0
 STATE_WARNING=1
 STATE_CRITICAL=2
 STATE_UNKNOWN=3
+TMPFILEPAT="/tmp/check_logwarn.XXXXXX"
 
 # We want to get the error result of logwarn(1), not sed(1), so set "pipefail" bash option
 set -o pipefail
 
 # Create temporary file for stderr output
-ERROUT_FILE=`mktemp -q /tmp/check_logwarn.XXXXXX`
+ERROUT_FILE=`mktemp -q "${TMPFILEPAT}"`
 if [ $? -ne 0 ]; then
-    echo "CRITICAL - Can't create temporary file"
-    exit ${STATE_CRITICAL}
+    echo "Can't create temporary file ${TMPFILEPAT}"
+    exit ${STATE_UNKNOWN}
 fi
 trap "rm -f ${ERROUT_FILE}" 0 2 3 5 10 13 15
 
@@ -28,7 +29,7 @@ fi
 LOG_MESSAGE=`logwarn ${1+"$@"} 2>"${ERROUT_FILE}" | tr '\n' ' ' | sed 's/^\(.\{77\}\).\{1,\}$/\1.../g'`
 LOGWARN_EXIT="$?"
 
-# If there was an error, output put the stderr message instead
+# If there was an error, output the stderr message instead
 if [ ${LOGWARN_EXIT} -gt 1 ]; then
     LOG_MESSAGE=`cat "${ERROUT_FILE}" | tr '\n' ' ' | sed 's/^\(.\{77\}\).\{1,\}$/\1.../g'`
 fi
@@ -44,11 +45,11 @@ case $LOGWARN_EXIT in
         exit ${STATE_OK}
         ;;
     1)
-        echo "WARNING: Log errors found: ${LOG_MESSAGE}"
+        echo "Log errors: ${LOG_MESSAGE}"
         exit ${STATE_WARNING}
         ;;
     *)
-        echo "UNKNOWN: logwarn(1) error: ${LOG_MESSAGE}"
+        echo "logwarn(1) error: ${LOG_MESSAGE}"
         exit ${STATE_UNKNOWN}
         ;;
 esac
