@@ -39,7 +39,7 @@
 
 // Definitions
 #ifndef DEFAULT_ROTPAT
-#define DEFAULT_ROTPAT          "^(-[[:digit:]]{8}|\\.[01])(\\.(gz|bz2))?$"
+#define DEFAULT_ROTPAT          "^(-[[:digit:]]{8}|\\.[01])(\\.(gz|xz|bz2))?$"
 #endif
 
 #ifndef DEFAULT_STATE_DIR
@@ -313,7 +313,6 @@ static void
 scan_file(const char *logfile, struct scan_state *state)
 {
     unsigned char compressed = 0;
-    unsigned char buf[3];
     char cmdbuf[PATH_MAX];
     char *line = NULL;
     FILE *fp;
@@ -328,14 +327,22 @@ scan_file(const char *logfile, struct scan_state *state)
         exit(EXIT_ERROR);
     }
 
-    // Check for compressed file and if so decode gzip/bzip2 on the fly
+    // Check for compressed file and if so decode gzip/xz/bzip2 on the fly
     if (logfile != NULL) {
-        if (fread(buf, 3, 1, fp) == 1) {
-            if ((buf[0] == 0x1f && buf[1] == 0x8b) || (buf[0] == 'B' && buf[1] == 'Z' && buf[2] == 'h')) {
-                const char *cmd = buf[0] == 0x1f ? "gunzip" : "bunzip2";
+        const char *cmdfmt = NULL;
+        unsigned char magic[6];
 
+        if (fread(magic, sizeof(magic), 1, fp) == 1) {
+            if (magic[0] == 0x1f && magic[1] == 0x8b)
+                cmdfmt = "gunzip -c '%s'";
+            else if (magic[0] == 'B' && magic[1] == 'Z' && magic[2] == 'h')
+                cmdfmt = "bunzip2 -c '%s'";
+            else if (magic[0] == 0xfd && magic[1] == 0x37 && magic[2] == 0x7a
+              && magic[3] == 0x58 && magic[4] == 0x5a && magic[5] == 0x00)
+                cmdfmt = "unxz -c '%s'";
+            if (cmdfmt != NULL) {
                 (void)fclose(fp);
-                snprintf(cmdbuf, sizeof(cmdbuf), "%s -c '%s'", cmd, logfile);
+                snprintf(cmdbuf, sizeof(cmdbuf), cmdfmt, logfile);
                 if ((fp = popen(cmdbuf, "r")) == NULL) {
                     fprintf(stderr, "%s: can't invoke \"%s\": %s\n", PACKAGE, cmdbuf, strerror(errno));
                     exit(EXIT_ERROR);

@@ -1,7 +1,11 @@
 
-Version 1.0.9
+Version 1.0.9 (r95) Released November 9, 2012
 
-    - Nagios plugin fixes: fix '-h' flag and unportable sed(1) usage
+    - Add support for rotated logs that are xz(1) compressed
+    - Plugin: exit UNKNOWN instead of CRITICAL if can't create temp file
+    - Plugin: add support for '-h' command line flag
+    - Plugin: fix unportable sed(1) usage
+    - Plugin: omit alert level from status message
 
 Version 1.0.8 (r88) Released April 7, 2012
 
