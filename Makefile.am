@@ -32,7 +32,7 @@ plugindir=		$(prefix)/lib/nagios/plugins
 
 plugin_SCRIPTS=		check_logwarn
 
-EXTRA_DIST=		CHANGES logwarn.1 logwarn.spec check_logwarn
+EXTRA_DIST=		CHANGES logwarn.1 logwarn.spec
 
 logwarn_SOURCES=	main.c \
 			state.c \

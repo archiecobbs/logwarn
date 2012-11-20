@@ -63,6 +63,10 @@ static int          num_match_patterns;
 static int          read_from_beginning;
 static int          quiet;
 static int          any_matches;
+static unsigned int error_count;
+static unsigned int max_errors = UINT_MAX;
+static unsigned int line_count = 0;
+static unsigned int max_lines = UINT_MAX;
 static struct repat *match_patterns;
 
 // Internal functions
@@ -78,12 +82,13 @@ main(int argc, char **argv)
     const char *logfile;
     struct stat sb;
     const char *rotpat = DEFAULT_ROTPAT;
+    char *eptr;
     int ignore_nonexistent = 0;
     int initialize = 0;
     int i;
 
     // Parse command line
-    while ((i = getopt(argc, argv, "ad:f:him:npqr:vz")) != -1) {
+    while ((i = getopt(argc, argv, "ad:f:hiL:m:M:npqr:tvz")) != -1) {
         switch (i) {
         case 'a':
             auto_initialize = 1;
@@ -96,6 +101,20 @@ main(int argc, char **argv)
             break;
         case 'm':
             parse_pattern(&log_pattern, optarg);
+            break;
+        case 'L':
+            max_lines = (int)strtoul(optarg, &eptr, 10);
+            if (*optarg != '\0' && *eptr != '\0') {
+                fprintf(stderr, "%s: invalid argument `%s' to `-%c' flag\n", PACKAGE, optarg, i);
+                exit(EXIT_ERROR);
+            }
+            break;
+        case 'M':
+            max_errors = (int)strtoul(optarg, &eptr, 10);
+            if (*optarg != '\0' && *eptr != '\0') {
+                fprintf(stderr, "%s: invalid argument `%s' to `-%c' flag\n", PACKAGE, optarg, i);
+                exit(EXIT_ERROR);
+            }
             break;
         case 'r':
             rotpat = optarg;
@@ -412,10 +431,11 @@ scan_file(const char *logfile, struct scan_state *state)
         // Is this a new log entry or a continuation line?
         continuation = log_pattern.string != NULL && regexec(&log_pattern.regex, line, 0, NULL, 0) != 0;
 
-        // Does this line match? New log entries only.
+        // Does this line match? New log entries lines only.
         if (!continuation) {
             int matches = -1;
 
+            // Determine if this line matches
             for (i = 0; i < num_match_patterns; i++) {
                 const struct repat *const pat = &match_patterns[i];
 
@@ -426,14 +446,31 @@ scan_file(const char *logfile, struct scan_state *state)
             }
             if (matches == -1)
                 matches = default_match;
+
+            // Update error count
+            if (matches)
+                error_count++;
+
+            // Update matching state
             state->matching = matches;
         }
 
+        // Reset line counter
+        if (!continuation)
+            line_count = 0;
+
         // Output line if it matches
         if (state->matching) {
+
+            // Update flag
             any_matches = 1;
-            if (!quiet)
+
+            // Output line if appropriate
+            if (!quiet && line_count < max_lines && error_count <= max_errors)
                 printf("%s\n", line);
+
+            // Update line and error counters
+            line_count++;
         }
     }
 
@@ -472,7 +509,7 @@ static void
 usage(void)
 {
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "  logwarn [-d dir | -f file] [-m firstpat] [-r sufpat] [-ahnqpv] logfile [!]pattern ...\n");
+    fprintf(stderr, "  logwarn [-d dir | -f file] [-m firstpat] [-r sufpat] [-L lines] [-M msgs] [-ahnqpvz] logfile [!]pattern ...\n");
     fprintf(stderr, "  logwarn [-d dir | -f file] -i logfile\n");
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "  -a    Auto-init: force `-i' if no state file exists\n");
@@ -480,7 +517,9 @@ usage(void)
     fprintf(stderr, "  -f    Specify state file directly\n");
     fprintf(stderr, "  -h    Output this help message and exit\n");
     fprintf(stderr, "  -i    Initialize state as `up to date' (implies -n)\n");
+    fprintf(stderr, "  -L    Specify maximum number of lines to output per log message\n");
     fprintf(stderr, "  -m    Enable multi-line support; first lines start with firstpat\n");
+    fprintf(stderr, "  -M    Specify maximum number of log messages to output\n");
     fprintf(stderr, "  -n    A nonexistent log file is not an error; treat as empty\n");
     fprintf(stderr, "  -q    Don't output the matched log messages\n");
     fprintf(stderr, "  -r    Specify rotated file suffix pattern; default \"%s\"\n", DEFAULT_ROTPAT);
@@ -493,7 +532,7 @@ static void
 version(void)
 {
     fprintf(stderr, "%s version %s (r%s)\n", PACKAGE_TARNAME, PACKAGE_VERSION, logwarn_svnrev);
-    fprintf(stderr, "Copyright (C) 2010-2011 Archie L. Cobbs\n");
+    fprintf(stderr, "Copyright (C) 2010-2012 Archie L. Cobbs\n");
     fprintf(stderr, "This is free software; see the source for copying conditions.  There is NO\n");
     fprintf(stderr, "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
 }

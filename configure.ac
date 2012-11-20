@@ -41,7 +41,10 @@ AC_DEFINE(_DARWIN_C_SOURCE, 1, MacOS functions)
 # Check for required programs
 AC_PROG_INSTALL
 AC_PROG_CC
+AC_PATH_PROG([CAT], [cat], [], [])
 AC_PATH_PROG([GETCONF], [getconf], [], [])
+AC_PATH_PROG([RM], [rm], [], [])
+AC_PATH_PROG([TR], [tr], [], [])
 
 # Check for required header files
 AC_HEADER_STDC
@@ -73,6 +76,7 @@ fi
 AC_CONFIG_FILES(Makefile)
 AC_CONFIG_FILES(logwarn.1)
 AC_CONFIG_FILES(logwarn.spec)
+AC_CONFIG_FILES(check_logwarn)
 AM_CONFIG_HEADER(config.h)
 
 # Go
