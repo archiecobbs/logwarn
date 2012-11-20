@@ -1,0 +1,95 @@
+#!/bin/bash
+
+# Constants
+NAME="check_logwarn"
+STATE_OK='0'
+STATE_WARNING='1'
+STATE_CRITICAL='2'
+STATE_UNKNOWN='3'
+TMPFILEPAT="/tmp/${NAME}.XXXXXX"
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+LOGWARN="@bindir@/logwarn"
+CAT="@CAT@"
+RM="@RM@"
+TR="@TR@"
+
+# Create temporary files for stdout and stderr output
+STDOUT_FILE=`mktemp -q "${TMPFILEPAT}"`
+if [ $? -ne 0 ]; then
+    echo "Can't create temporary file ${TMPFILEPAT}"
+    exit ${STATE_UNKNOWN}
+fi
+trap "${RM} -f ${STDOUT_FILE}" 0 2 3 5 10 13 15
+STDERR_FILE=`mktemp -q "${TMPFILEPAT}"`
+if [ $? -ne 0 ]; then
+    echo "Can't create temporary file ${TMPFILEPAT}"
+    exit ${STATE_UNKNOWN}
+fi
+trap "${RM} -f ${STDOUT_FILE} ${STDERR_FILE}" 0 2 3 5 10 13 15
+
+# Scan args for '-h' or '-F'; all other stuff goes to logwarn(1)
+declare -a LOGWARN_ARGS
+PLUGIN_ARGS=("$@")
+while [ "${#PLUGIN_ARGS[@]}" -gt 0 ]; do
+    KEYS=("${!PLUGIN_ARGS[@]}")
+    FIRST_KEY="${KEYS[0]}"
+    case "${PLUGIN_ARGS[$FIRST_KEY]}" in
+    -h)
+        "${LOGWARN}" -h 2>&1 | sed -e 's/^  log/  check_log/g' -e 's/^\(.*\[-M msgs]\)\(.*\)$/\1 [-F command]\2/g' -e '/^  -f/a\
+          \  -F    Pipe logwarn(1) output through command \
+          '
+        exit 0
+        ;;
+    -F)
+        NEXT_KEY=`expr $FIRST_KEY + 1`
+        FILTER_COMMAND="${PLUGIN_ARGS[$NEXT_KEY]}"
+        unset PLUGIN_ARGS[$FIRST_KEY]
+        unset PLUGIN_ARGS[$NEXT_KEY]
+        ;;
+    --)
+        LOGWARN_ARGS=( "${LOGWARN_ARGS[@]}" "${PLUGIN_ARGS[@]}" )
+        break
+        ;;
+    *)
+        LOGWARN_ARGS=( "${LOGWARN_ARGS[@]}" "${PLUGIN_ARGS[$FIRST_KEY]}" )
+        unset PLUGIN_ARGS[$FIRST_KEY]
+        ;;
+    esac
+done
+
+# Run logwarn
+"${LOGWARN}" "${LOGWARN_ARGS[@]}" >"${STDOUT_FILE}" 2>"${STDERR_FILE}"
+LOGWARN_EXIT="$?"
+
+# If there was an error, output the stderr output
+if [ ${LOGWARN_EXIT} -gt 1 ]; then
+    echo -n "UNKNOWN: logwarn(1) error: "
+    "${CAT}" "${STDERR_FILE}"
+    exit ${STATE_UNKNOWN}
+fi
+
+# If logwarn returned zero, there were no errors
+if [ "${LOGWARN_EXIT}" -eq 0 ]; then
+    echo "OK: No log errors found"
+    exit ${STATE_OK}
+fi
+
+echo FILTER_COMMAND="$FILTER_COMMAND"
+# Filter output?
+if [ -n "${FILTER_COMMAND}" ]; then
+    ${FILTER_COMMAND} < "${STDOUT_FILE}" > "${STDERR_FILE}" 2>&1
+    FILTER_RESULT="$?"
+    if [ "${FILTER_RESULT}" -ne 0 ]; then
+        echo -n "UNKNOWN: \`-F' command failed: "
+        "${CAT}" "${STDERR_FILE}"
+        exit ${STATE_UNKNOWN}
+    fi
+    mv "${STDERR_FILE}" "${STDOUT_FILE}"
+fi
+
+# There were errors; include them in our output
+echo -n "Log errors: "
+"${CAT}" "${STDOUT_FILE}"
+exit ${STATE_WARNING}
+

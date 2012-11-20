@@ -31,6 +31,8 @@
 .Op Fl d Ar dir | Fl f Ar file
 .Op Fl m Ar firstpat
 .Op Fl r Ar sufpat
+.Op Fl L Ar maxlines
+.Op Fl M Ar maxerrors
 .Ar logfile
 .Ar [!]pattern ...
 .Ek
@@ -128,6 +130,9 @@ Each
 .Ar logfile
 should have its own state file.
 .Pp
+To run in stateless mode, use
+.Fl f Ar /dev/null .
+.Pp
 It is an error to use this flag and
 .Fl d
 at the same time.
@@ -140,6 +145,13 @@ as `up to date'.
 This causes the next invocation to start its scan at the current
 (as of this invocation) end of
 .Ar logfile .
+.It Fl L
+Specify the maximum number of lines to output for any single log message.
+This flag is not needed unless multi-line messages are being detected using
+.Fl m .
+.Pp
+Setting this value to zero has the same effect as
+.Fl q .
 .It Fl m
 Enable multi-line support using
 .Ar firstpat
@@ -155,6 +167,16 @@ is matched against the extended regular expression
 non-matching lines are considered continuations of the previous line.
 .Pp
 Multi-line mode will work correctly even if a message crosses a log file rotation boundary.
+.It Fl M
+Specify the maximum number of log messages to output.
+Log messages beyond this limit are processed normally but their output is suppressed.
+.Pp
+Messages that span multiple lines (see
+.Fl m )
+only count once.
+.Pp
+Setting this value to zero has the same effect as
+.Fl q .
 .It Fl n
 Normally, if the
 .Ar logfile
