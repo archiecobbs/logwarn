@@ -9,11 +9,11 @@ STATE_UNKNOWN='3'
 TMPFILEPAT="/tmp/${NAME}.XXXXXX"
 prefix="@prefix@"
 exec_prefix="@exec_prefix@"
-DEFAULT_FILTER='@SED@ -e '\''1s/^\(.*\)$/Log errors: \1/g'\'
 LOGWARN="@bindir@/logwarn"
 CAT="@CAT@"
 SED="@SED@"
 RM="@RM@"
+DEFAULT_FILTER="${SED}"' -e '\''1s/^\(.*\)$/Log errors: \1/g'\'
 
 # Create temporary files for stdout and stderr output
 STDOUT_FILE=`mktemp -q "${TMPFILEPAT}"`
@@ -66,7 +66,7 @@ LOGWARN_EXIT="$?"
 # If there was an error, output the stderr output
 if [ ${LOGWARN_EXIT} -gt 1 ]; then
     echo -n "UNKNOWN: logwarn(1) error: "
-    "${CAT}" "${STDERR_FILE}"
+    "${CAT}" "${STDERR_FILE}" | "${SED}" 's/^logwarn: //g'
     exit ${STATE_UNKNOWN}
 fi
 
