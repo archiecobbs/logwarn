@@ -41,10 +41,26 @@ AC_DEFINE(_DARWIN_C_SOURCE, 1, MacOS functions)
 # Check for required programs
 AC_PROG_INSTALL
 AC_PROG_CC
+AC_PATH_PROG([BASH], [bash], [], [])
+if test "x${BASH}" = "x"; then
+    AC_MSG_ERROR[bash not found]
+fi
 AC_PATH_PROG([CAT], [cat], [], [])
+if test "x${CAT}" = "x"; then
+    AC_MSG_ERROR[cat not found]
+fi
 AC_PATH_PROG([GETCONF], [getconf], [], [])
+if test "x${GETCONF}" = "x"; then
+    AC_MSG_ERROR[getconf not found]
+fi
 AC_PATH_PROG([RM], [rm], [], [])
-AC_PATH_PROG([TR], [tr], [], [])
+if test "x${RM}" = "x"; then
+    AC_MSG_ERROR[rm not found]
+fi
+AC_PATH_PROG([SED], [sed], [], [])
+if test "x${SED}" = "x"; then
+    AC_MSG_ERROR[sed not found]
+fi
 
 # Check for required header files
 AC_HEADER_STDC

@@ -2,7 +2,7 @@
 Version Next
 
     - Added `-M' and `-L' command line flags
-    - Added `-F' flag to check_logwarn Nagios plugin
+    - Added `-F' flag to Nagios plugin
 
 Version 1.0.9 (r95) Released November 9, 2012
 
