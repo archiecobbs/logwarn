@@ -104,14 +104,14 @@ main(int argc, char **argv)
             break;
         case 'L':
             max_lines = (int)strtoul(optarg, &eptr, 10);
-            if (*optarg != '\0' && *eptr != '\0') {
+            if (*optarg == '\0' || *eptr != '\0') {
                 fprintf(stderr, "%s: invalid argument `%s' to `-%c' flag\n", PACKAGE, optarg, i);
                 exit(EXIT_ERROR);
             }
             break;
         case 'M':
             max_errors = (int)strtoul(optarg, &eptr, 10);
-            if (*optarg != '\0' && *eptr != '\0') {
+            if (*optarg == '\0' || *eptr != '\0') {
                 fprintf(stderr, "%s: invalid argument `%s' to `-%c' flag\n", PACKAGE, optarg, i);
                 exit(EXIT_ERROR);
             }
