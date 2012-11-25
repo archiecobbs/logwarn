@@ -8,7 +8,8 @@ NAME
      logwarn -- utility for finding interesting messages in log files
 
 SYNOPSIS
-     logwarn [-ahnpqvz] [-d dir | -f file] [-m firstpat] [-r sufpat] logfile [!]pattern ...
+     logwarn [-ahnpqvz] [-d dir | -f file] [-m firstpat] [-r sufpat] [-L maxlines] [-M maxerrors]
+             logfile [!]pattern ...
 
      logwarn -i [-d dir | -f file] logfile
 
@@ -57,12 +58,19 @@ OPTIONS
      -f      Specify the state file used to store state information between invocations.  Each
              logfile should have its own state file.
 
+             To run in stateless mode, use -f /dev/null.
+
              It is an error to use this flag and -d at the same time.
 
      -h      Output help message and exit.
 
      -i      Initialize the saved state for logfile as `up to date'.  This causes the next invoca-
              tion to start its scan at the current (as of this invocation) end of logfile.
+
+     -L      Specify the maximum number of lines to output for any single log message.  This flag is
+             not needed unless multi-line messages are being detected using -m.
+
+             Setting this value to zero has the same effect as -q.
 
      -m      Enable multi-line support using firstpat to match the first line of new log messages.
 
@@ -72,6 +80,13 @@ OPTIONS
 
              Multi-line mode will work correctly even if a message crosses a log file rotation
              boundary.
+
+     -M      Specify the maximum number of log messages to output.  Log messages beyond this limit
+             are processed normally but their output is suppressed.
+
+             Messages that span multiple lines (see -m) only count once.
+
+             Setting this value to zero has the same effect as -q.
 
      -n      Normally, if the logfile does not exist, logwarn will exit with an error.  This flag
              causes logwarn to treat a non-existent logfile as if it were empty.
