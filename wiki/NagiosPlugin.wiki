@@ -2,9 +2,25 @@
 
 The *logwarn* Nagios plugin is called *check_logwarn*.
 
+===Plugin Usage===
+
 The command line usage is the same as for *logwarn(1)* itself. However, the output and exit codes are different, as required by the Nagios plugin standard.
 
-The following settings are suggested when configuring a Nagios check to use *check_logwarn*:
+The *logwarn* Nagios plugin supports one additional command line parameter, `-F command`, which specifies a command through which the matching log messages should be piped prior to inclusion in the plugin output.
+
+The `command` can be any normal `bash(1)` shell command. The default command is `sed -e '1s/^\(.*\)$/Log errors: \1/g'` which prepends `Log errors: ` to the first line of output.
+
+For example, if you only want the plugin to output the first log message line (Nagios 2.x compatible behavior) truncated to 80 characters, you could use the command `sed -r 's/^(.{77}).+$/\1.../g'`.
+To only output the number of matching lines, you could use something like `awk '{ N++ } END { printf "%d line(s) logged\n", N }'`. Etc.
+
+Don't forget to pay attention to proper escaping for backslash and quote characters, etc.
+
+===Nagios Configuration===
+
+The following settings are suggested when configuring a Nagios check to use *check_logwarn*.
+
+Note: all of what follows assumes you are using normal *logwarn* state files to keep track of the position in the log files. When running in "stateless" mode, none of this applies.
+
 {{{
    is_volatile            1
    max_check_attempts     1
