@@ -1,5 +1,5 @@
 
-Version Next
+Version 1.0.10 (r104) Released November 25, 2012
 
     - Added `-M' and `-L' command line flags
     - Added `-F' flag to Nagios plugin
