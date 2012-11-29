@@ -21,14 +21,15 @@
 Name:           logwarn
 Version:        @PACKAGE_VERSION@
 Release:        1
-License:        Apache License, Version 2.0
+License:        Apache-2.0
 Summary:        Utility for finding interesting messages in log files
-Group:          System/Utilities
+Group:          System/Monitoring
 Source:         %{name}-%{version}.tar.gz
 URL:            http://%{name}.googlecode.com/
 BuildRoot:      %{_tmppath}/%{name}-%{version}-root
 BuildRequires:  make
 BuildRequires:  gcc
+BuildRequires:  nagios-rpm-macros
 
 %description
 %{name} searches for interesting messages in log files, where ``interest-
@@ -55,7 +56,6 @@ tion.
 make
 
 %install
-rm -rf ${RPM_BUILD_ROOT}
 %{makeinstall}
 install -d ${RPM_BUILD_ROOT}%{_var}/lib/%{name}
 
@@ -78,6 +78,9 @@ A Nagios plugin based on the logwarn(1) utility.
 
 %files nagios-plugin
 %defattr(0755,root,root,0755)
-%attr(0755,root,root) %{_prefix}/lib/nagios
+# avoid build dependecy of nagios - own the dirs
+%dir %{nagios_libdir}
+%dir %{nagios_plugindir}
+%{nagios_plugindir}/check_logwarn
 
 %changelog
