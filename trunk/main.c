@@ -63,6 +63,7 @@ static int          num_match_patterns;
 static int          read_from_beginning;
 static int          quiet;
 static int          any_matches;
+static int          line_numbers;
 static unsigned int error_count;
 static unsigned int max_errors = UINT_MAX;
 static unsigned int line_count = 0;
@@ -88,7 +89,7 @@ main(int argc, char **argv)
     int i;
 
     // Parse command line
-    while ((i = getopt(argc, argv, "ad:f:hiL:m:M:npqr:tvz")) != -1) {
+    while ((i = getopt(argc, argv, "ad:f:hilL:m:M:npqr:tvz")) != -1) {
         switch (i) {
         case 'a':
             auto_initialize = 1;
@@ -101,6 +102,9 @@ main(int argc, char **argv)
             break;
         case 'm':
             parse_pattern(&log_pattern, optarg);
+            break;
+        case 'l':
+            line_numbers = 1;
             break;
         case 'L':
             max_lines = (int)strtoul(optarg, &eptr, 10);
@@ -466,8 +470,11 @@ scan_file(const char *logfile, struct scan_state *state)
             any_matches = 1;
 
             // Output line if appropriate
-            if (!quiet && line_count < max_lines && error_count <= max_errors)
-                printf("%s\n", line);
+            if (!quiet && line_count < max_lines && error_count <= max_errors) {
+                if (line_numbers)
+                    printf("%ld:", state->line - 1);
+                printf("%s\n",line);
+            }
 
             // Update line and error counters
             line_count++;
@@ -518,6 +525,7 @@ usage(void)
     fprintf(stderr, "  -h    Output this help message and exit\n");
     fprintf(stderr, "  -i    Initialize state as `up to date' (implies -n)\n");
     fprintf(stderr, "  -L    Specify maximum number of lines to output per log message\n");
+    fprintf(stderr, "  -l    Prefix each output line with the line number from the log file\n");
     fprintf(stderr, "  -m    Enable multi-line support; first lines start with firstpat\n");
     fprintf(stderr, "  -M    Specify maximum number of log messages to output\n");
     fprintf(stderr, "  -n    A nonexistent log file is not an error; treat as empty\n");
