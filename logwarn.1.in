@@ -152,6 +152,8 @@ This flag is not needed unless multi-line messages are being detected using
 .Pp
 Setting this value to zero has the same effect as
 .Fl q .
+.It Fl l
+Prefix each output line with the line number from the log file.
 .It Fl m
 Enable multi-line support using
 .Ar firstpat
