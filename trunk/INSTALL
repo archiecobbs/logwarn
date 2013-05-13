@@ -5,10 +5,11 @@ Simplified instructions:
     2. make
     3. sudo make install
 
-Please see
+If you want to build an RPM, a spec file you can use is included.
+For more information on how to build RPM's, see:
 
-    http://code.google.com/p/logwarn
+    https://www.google.com/search?q=how+to+build+rpm
 
-for more information.
+See http://code.google.com/p/logwarn for more information about logwarn.
 
 $Id$
