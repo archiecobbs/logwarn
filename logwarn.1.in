@@ -27,7 +27,7 @@
 .Sh SYNOPSIS
 .Nm logwarn
 .Bk -words
-.Op Fl ahnpqvz
+.Op Fl ahlnpqvz
 .Op Fl d Ar dir | Fl f Ar file
 .Op Fl m Ar firstpat
 .Op Fl r Ar sufpat
