@@ -57,7 +57,10 @@ make
 
 %install
 %{makeinstall}
-install -d ${RPM_BUILD_ROOT}%{_var}/lib/%{name}
+install -d %{buildroot}%{_var}/lib/%{name}
+install -d %{buildroot}%{_datadir}/doc/packages/%{name}
+install COPYING %{buildroot}%{_datadir}/doc/packages/%{name}/
+rm -rf %{buildroot}%{_datadir}/doc/packages/%{name}/INSTALL
 
 %files
 %attr(0755,root,root) %{_bindir}/%{name}
@@ -68,13 +71,18 @@ install -d ${RPM_BUILD_ROOT}%{_var}/lib/%{name}
 
 %package nagios-plugin
 Summary:        Nagios plugin based on the logwarn(1) utility
-Group:          System/Utilities
+Group:          System/Monitoring
 Requires:       bash
 Requires:       logwarn >= %{version}
 Buildarch:      noarch
 
 %description nagios-plugin
-A Nagios plugin based on the logwarn(1) utility.
+%{name} searches for interesting messages in log files, where ``interest-
+ing'' is defined by an user-supplied list of positive and negative (pre-
+ceeded with a ``!'') extended regular expressions provided on the command
+line.
+
+This package contains the Nagios plugin that is based on %{name}.
 
 %files nagios-plugin
 %defattr(0755,root,root,0755)
