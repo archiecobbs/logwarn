@@ -72,7 +72,7 @@ static struct repat *match_patterns;
 
 // Internal functions
 static void scan_file(const char *file, struct scan_state *state);
-static void parse_pattern(struct repat *pat, const char *string);
+static void parse_pattern(struct repat *pat, const char *string, int eflags);
 static void version(void);
 static void usage(void);
 
@@ -83,16 +83,21 @@ main(int argc, char **argv)
     const char *logfile;
     struct stat sb;
     const char *rotpat = DEFAULT_ROTPAT;
+    const char *mpat = NULL;
     char *eptr;
     int ignore_nonexistent = 0;
+    int eflags = 0;
     int initialize = 0;
     int i;
 
     // Parse command line
-    while ((i = getopt(argc, argv, "ad:f:hilL:m:M:npqr:tvz")) != -1) {
+    while ((i = getopt(argc, argv, "acd:f:hilL:m:M:npqr:tvz")) != -1) {
         switch (i) {
         case 'a':
             auto_initialize = 1;
+            break;
+        case 'c':
+            eflags |= REG_ICASE;
             break;
         case 'd':
             state_dir = optarg;
@@ -101,7 +106,7 @@ main(int argc, char **argv)
             state_file = optarg;
             break;
         case 'm':
-            parse_pattern(&log_pattern, optarg);
+            mpat = optarg;
             break;
         case 'l':
             line_numbers = 1;
@@ -150,6 +155,8 @@ main(int argc, char **argv)
             exit(EXIT_ERROR);
         }
     }
+    if (mpat != NULL)
+        parse_pattern(&log_pattern, mpat, eflags);
     argv += optind;
     argc -= optind;
     switch (argc) {
@@ -181,7 +188,7 @@ main(int argc, char **argv)
                     patstr++;
                     pat->negate = 1;
                 }
-                parse_pattern(pat, patstr);
+                parse_pattern(pat, patstr, eflags);
             }
         }
         break;
@@ -203,7 +210,7 @@ main(int argc, char **argv)
     }
 
     // Parse rotated file pattern
-    parse_pattern(&rot_pattern, rotpat);
+    parse_pattern(&rot_pattern, rotpat, 0);
 
     // Initialize state
     memset(&state, 0, sizeof(state));
@@ -499,12 +506,12 @@ scan_file(const char *logfile, struct scan_state *state)
 }
 
 static void
-parse_pattern(struct repat *pat, const char *string)
+parse_pattern(struct repat *pat, const char *string, int eflags)
 {
     char ebuf[1024];
     int r;
 
-    if ((r = regcomp(&pat->regex, string, REG_EXTENDED|REG_NOSUB)) != 0) {
+    if ((r = regcomp(&pat->regex, string, REG_EXTENDED|REG_NOSUB|eflags)) != 0) {
         regerror(r, &pat->regex, ebuf, sizeof(ebuf));
         fprintf(stderr, "%s: invalid regular expression \"%s\": %s", PACKAGE, string, ebuf);
         exit(EXIT_ERROR);

@@ -27,7 +27,7 @@
 .Sh SYNOPSIS
 .Nm logwarn
 .Bk -words
-.Op Fl ahlnpqvz
+.Op Fl achlnpqvz
 .Op Fl d Ar dir | Fl f Ar file
 .Op Fl m Ar firstpat
 .Op Fl r Ar sufpat
@@ -109,6 +109,12 @@ intialization behavior in cases where
 exists but the state file does not.
 Normally this is not what you want, but this can be helpful in cases where it's important to
 avoid a flood of repeated log messages caused by state files somehow disappearing between invocations.
+.It Fl c
+Match each
+.Ar pattern
+and
+.Ar firstpat
+(if any) case-insensitively.
 .It Fl d
 Specify
 .Ar dir
