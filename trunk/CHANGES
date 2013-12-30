@@ -3,6 +3,7 @@ Version Next
 
     - Added `-l' flag (contributed by Tobias Galitzien)
     - Added `-c' flag for case-insensitive matching (issue #19)
+    - Added `-N' flag to limit messages processed (issue #17)
 
 Version 1.0.10 (r104) Released November 25, 2012
 
