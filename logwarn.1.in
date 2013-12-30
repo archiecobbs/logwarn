@@ -32,7 +32,8 @@
 .Op Fl m Ar firstpat
 .Op Fl r Ar sufpat
 .Op Fl L Ar maxlines
-.Op Fl M Ar maxerrors
+.Op Fl M Ar maxprint
+.Op Fl N Ar maxerrors
 .Ar logfile
 .Ar [!]pattern ...
 .Ek
@@ -152,11 +153,16 @@ This causes the next invocation to start its scan at the current
 (as of this invocation) end of
 .Ar logfile .
 .It Fl L
-Specify the maximum number of lines to output for any single log message.
+Produce at most
+.Ar maxlines
+lines of output for any single log message; continuation lines beyond
+this limit are suppressed.
 This flag is not needed unless multi-line messages are being detected using
 .Fl m .
 .Pp
-Setting this value to zero has the same effect as
+Setting
+.Ar maxlines
+to zero has the same effect as
 .Fl q .
 .It Fl l
 Prefix each output line with the line number from the log file.
@@ -176,15 +182,49 @@ non-matching lines are considered continuations of the previous line.
 .Pp
 Multi-line mode will work correctly even if a message crosses a log file rotation boundary.
 .It Fl M
-Specify the maximum number of log messages to output.
-Log messages beyond this limit are processed normally but their output is suppressed.
+Output at most
+.Ar maxprint
+log messages; log messages beyond this limit are processed normally but their output is suppressed.
 .Pp
 Messages that span multiple lines (see
 .Fl m )
 only count once.
 .Pp
-Setting this value to zero has the same effect as
+Setting
+.Ar maxprint
+zero has the same effect as
 .Fl q .
+.It Fl N
+Process at most
+.Ar maxerrors
+log messages.
+.Pp
+In contrast to
+.Fl M ,
+which limits the number of log messages output without affecting how
+many are processed, the
+.Fl N
+flag causes
+.Nm
+to stop processing after encountering the specified number of log messages,
+possibly before reaching the end of the log file.
+.Pp
+As a result, repeated invocations of
+.Nm
+may be required to output all outstanding log messages.
+When using the
+.Fl N
+flag, be sure to invoke
+.Nm
+frequently enough so that it doesn't fall behind.
+.Pp
+Messages that span multiple lines (see
+.Fl m )
+only count once.
+.Pp
+The value of
+.Ar maxerrors
+must be at least one.
 .It Fl n
 Normally, if the
 .Ar logfile

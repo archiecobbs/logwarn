@@ -1,0 +1,10 @@
+#!/bin/bash
+
+. testutil.sh
+cd data0009
+
+# Scan entire file
+reset_state_file statefile logfile
+verify_output output1 -l -L 2 -N 2 -f statefile -m ^START: logfile 
+verify_output output2 -l -L 2 -N 2 -f statefile -m ^START: logfile 
+
