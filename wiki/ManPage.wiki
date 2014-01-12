@@ -8,8 +8,8 @@ NAME
      logwarn -- utility for finding interesting messages in log files
 
 SYNOPSIS
-     logwarn [-ahnpqvz] [-d dir | -f file] [-m firstpat] [-r sufpat] [-L maxlines] [-M maxerrors]
-             logfile [!]pattern ...
+     logwarn [-achlnpqvz] [-d dir | -f file] [-m firstpat] [-r sufpat] [-L maxlines] [-M maxprint]
+             [-N maxerrors] logfile [!]pattern ...
 
      logwarn -i [-d dir | -f file] logfile
 
@@ -47,6 +47,8 @@ OPTIONS
              avoid a flood of repeated log messages caused by state files somehow disappearing
              between invocations.
 
+     -c      Match each pattern and firstpat (if any) case-insensitively.
+
      -d      Specify dir as the directory in which logwarn will store state information between
              invocations.  When this flag is used, the name of the state file is automatically gen-
              erated from logfile.
@@ -67,10 +69,13 @@ OPTIONS
      -i      Initialize the saved state for logfile as `up to date'.  This causes the next invoca-
              tion to start its scan at the current (as of this invocation) end of logfile.
 
-     -L      Specify the maximum number of lines to output for any single log message.  This flag is
-             not needed unless multi-line messages are being detected using -m.
+     -L      Produce at most maxlines lines of output for any single log message; continuation lines
+             beyond this limit are suppressed.  This flag is not needed unless multi-line messages
+             are being detected using -m.
 
-             Setting this value to zero has the same effect as -q.
+             Setting maxlines to zero has the same effect as -q.
+
+     -l      Prefix each output line with the line number from the log file.
 
      -m      Enable multi-line support using firstpat to match the first line of new log messages.
 
@@ -81,12 +86,26 @@ OPTIONS
              Multi-line mode will work correctly even if a message crosses a log file rotation
              boundary.
 
-     -M      Specify the maximum number of log messages to output.  Log messages beyond this limit
-             are processed normally but their output is suppressed.
+     -M      Output at most maxprint log messages; log messages beyond this limit are processed nor-
+             mally but their output is suppressed.
 
              Messages that span multiple lines (see -m) only count once.
 
-             Setting this value to zero has the same effect as -q.
+             Setting maxprint zero has the same effect as -q.
+
+     -N      Process at most maxerrors log messages.
+
+             In contrast to -M, which limits the number of log messages output without affecting how
+             many are processed, the -N flag causes logwarn to stop processing after encountering
+             the specified number of log messages, possibly before reaching the end of the log file.
+
+             As a result, repeated invocations of logwarn may be required to output all outstanding
+             log messages.  When using the -N flag, be sure to invoke logwarn frequently enough so
+             that it doesn't fall behind.
+
+             Messages that span multiple lines (see -m) only count once.
+
+             The value of maxerrors must be at least one.
 
      -n      Normally, if the logfile does not exist, logwarn will exit with an error.  This flag
              causes logwarn to treat a non-existent logfile as if it were empty.
