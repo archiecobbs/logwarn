@@ -16,7 +16,8 @@ SYNOPSIS
 DESCRIPTION
      logwarn searches for interesting messages in log files, where ``interesting'' is defined by an
      user-supplied list of positive and negative extended regular expressions provided on the com-
-     mand line.
+     mand line.  A line that matches neither a positive nor a negative pattern is considered a match
+     (use the -p flag to change this default).
 
      Each log message is compared against each pattern in the order given.  Negative patterns are
      specified with a ``!'' prefix.  If the log message matches a positive pattern before matching a
