@@ -49,6 +49,10 @@
 searches for interesting messages in log files, where ``interesting'' is defined by an
 user-supplied list of positive and negative extended regular expressions
 provided on the command line.
+A line that matches neither a positive nor a negative pattern is considered a match
+(use the
+.Fl p
+flag to change this default).
 .Pp
 Each log message is compared against each
 .Ar pattern
