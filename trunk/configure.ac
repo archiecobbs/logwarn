@@ -41,8 +41,8 @@ AC_DEFINE(_DARWIN_C_SOURCE, 1, MacOS functions)
 # Check for required programs
 AC_PROG_INSTALL
 AC_PROG_CC
-AC_PATH_PROG([BASH], [bash], [], [])
-if test "x${BASH}" = "x"; then
+AC_PATH_PROG([BASH_SHELL], [bash], [], [])
+if test "x${BASH_SHELL}" = "x"; then
     AC_MSG_ERROR[bash not found]
 fi
 AC_PATH_PROG([CAT], [cat], [], [])
