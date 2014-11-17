@@ -1,4 +1,4 @@
-#!@BASH@
+#!@BASH_SHELL@
 
 # Constants
 NAME="check_logwarn"
@@ -10,7 +10,7 @@ TMPFILEPAT="/tmp/${NAME}.XXXXXX"
 prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 LOGWARN="@bindir@/logwarn"
-BASH="@BASH@"
+BASH_SHELL="@BASH_SHELL@"
 CAT="@CAT@"
 SED="@SED@"
 RM="@RM@"
@@ -79,7 +79,7 @@ fi
 
 # Filter output?
 if [ -n "${FILTER_COMMAND}" ]; then
-    "${BASH}" -c "${FILTER_COMMAND}" < "${STDOUT_FILE}" > "${STDERR_FILE}" 2>&1
+    "${BASH_SHELL}" -c "${FILTER_COMMAND}" < "${STDOUT_FILE}" > "${STDERR_FILE}" 2>&1
     FILTER_RESULT="$?"
     if [ "${FILTER_RESULT}" -ne 0 ]; then
         echo -n "UNKNOWN: \`-F' command failed: "
