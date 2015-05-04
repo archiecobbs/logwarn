@@ -25,7 +25,7 @@ License:        Apache-2.0
 Summary:        Utility for finding interesting messages in log files
 Group:          System/Monitoring
 Source:         %{name}-%{version}.tar.gz
-URL:            http://%{name}.googlecode.com/
+URL:            https://github.com/archiecobbs/%{name}
 BuildRoot:      %{_tmppath}/%{name}-%{version}-root
 BuildRequires:  make
 BuildRequires:  gcc

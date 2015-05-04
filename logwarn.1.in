@@ -355,7 +355,7 @@ An error occurred.
 .Sh SEE ALSO
 .Rs
 .%T "Logwarn: Utility for finding interesting messages in log files"
-.%O http://logwarn.googlecode.com/
+.%O https://github.com/archiecobbs/logwarn
 .Re
 .Sh AUTHOR
-.An Archie L. Cobbs Aq archie@dellroad.org
+.An Archie L. Cobbs Aq archie.cobbs@gmail.com
