@@ -1,0 +1,200 @@
+
+```
+LOGWARN(1)                           BSD General Commands Manual                          LOGWARN(1)
+
+NAME
+     logwarn -- utility for finding interesting messages in log files
+
+SYNOPSIS
+     logwarn [-achlnpqvz] [-d dir | -f file] [-m firstpat] [-r sufpat] [-L maxlines] [-M maxprint]
+             [-N maxerrors] logfile [!]pattern ...
+
+     logwarn -i [-d dir | -f file] logfile
+
+DESCRIPTION
+     logwarn searches for interesting messages in log files, where ``interesting'' is defined by an
+     user-supplied list of positive and negative extended regular expressions provided on the com-
+     mand line.  A line that matches neither a positive nor a negative pattern is considered a match
+     (use the -p flag to change this default).
+
+     Each log message is compared against each pattern in the order given.  Negative patterns are
+     specified with a ``!'' prefix.  If the log message matches a positive pattern before matching a
+     negative !pattern, or if none of the patterns match, then it's printed to standard output.
+
+     logwarn keeps track of its current position in the log file between invocations, so each match-
+     ing line is only ever output once.  This information is kept in a separate `state file' (see
+     the -d and -f flags below).  By default, logwarn interprets a missing state file as if the file
+     were previously empty, resulting in a scan of its entire contents; this behavior can be changed
+     with the -a and -i flags.
+
+     logwarn will find messages in log files that have been rotated (and possibly compressed) since
+     the previous invocation, as long as the rotated file has a name equal to logfile followed by a
+     suffix matching the rotated log file suffix pattern (see the -r flag below).
+
+     By default, each line in the log file is considered to be a separate log message.  Log messages
+     spanning multiple lines are supported with the use of the -m flag.
+
+     If logfile is `-' then standard input is scanned.  In this mode, multiple invocations of
+     logwarn can be pipelined together, optionally with intervening processing, to perform transfor-
+     mations of the raw log input prior to matching.  Typically the -z flag is used in this sce-
+     nario.
+
+OPTIONS
+     -a      Auto-initialize when the state file does not exist.  This flag turns on the -i intial-
+             ization behavior in cases where logfile exists but the state file does not.  Normally
+             this is not what you want, but this can be helpful in cases where it's important to
+             avoid a flood of repeated log messages caused by state files somehow disappearing
+             between invocations.
+
+     -c      Match each pattern and firstpat (if any) case-insensitively.
+
+     -d      Specify dir as the directory in which logwarn will store state information between
+             invocations.  When this flag is used, the name of the state file is automatically gen-
+             erated from logfile.
+
+             The default state directory is /var/lib/logwarn.
+
+             It is an error to use this flag and -f at the same time.
+
+     -f      Specify the state file used to store state information between invocations.  Each
+             logfile should have its own state file.
+
+             To run in stateless mode, use -f /dev/null.
+
+             It is an error to use this flag and -d at the same time.
+
+     -h      Output help message and exit.
+
+     -i      Initialize the saved state for logfile as `up to date'.  This causes the next invoca-
+             tion to start its scan at the current (as of this invocation) end of logfile.
+
+     -L      Produce at most maxlines lines of output for any single log message; continuation lines
+             beyond this limit are suppressed.  This flag is not needed unless multi-line messages
+             are being detected using -m.
+
+             Setting maxlines to zero has the same effect as -q.
+
+     -l      Prefix each output line with the line number from the log file.
+
+     -m      Enable multi-line support using firstpat to match the first line of new log messages.
+
+             Without this flag, each line in logfile is considered a separate log message.  With
+             this flag, each line in logfile is matched against the extended regular expression
+             firstpat; non-matching lines are considered continuations of the previous line.
+
+             Multi-line mode will work correctly even if a message crosses a log file rotation
+             boundary.
+
+     -M      Output at most maxprint log messages; log messages beyond this limit are processed nor-
+             mally but their output is suppressed.
+
+             Messages that span multiple lines (see -m) only count once.
+
+             Setting maxprint zero has the same effect as -q.
+
+     -N      Process at most maxerrors log messages.
+
+             In contrast to -M, which limits the number of log messages output without affecting how
+             many are processed, the -N flag causes logwarn to stop processing after encountering
+             the specified number of log messages, possibly before reaching the end of the log file.
+
+             As a result, repeated invocations of logwarn may be required to output all outstanding
+             log messages.  When using the -N flag, be sure to invoke logwarn frequently enough so
+             that it doesn't fall behind.
+
+             Messages that span multiple lines (see -m) only count once.
+
+             The value of maxerrors must be at least one.
+
+     -n      Normally, if the logfile does not exist, logwarn will exit with an error.  This flag
+             causes logwarn to treat a non-existent logfile as if it were empty.
+
+     -p      Change default match behavior to non-matching.  By default, if a log message doesn't
+             match any of the positive or negative patterns, it is considered a match.  This flag
+             reverses this behavior so that these messages are considered non-matches.
+
+     -q      Disable the printing of matching log messages to standard output.  The process exit
+             value can still be used to detect whether there were any matches (see below).
+
+     -r      Make the extended regular expression sufpat the rotated log file suffix pattern.
+
+             When logwarn detects that a log file has been rotated, it searches for the rotated log
+             file by finding files in the same directory that have the same name as logfile plus a
+             suffix matching the rotated log file suffix pattern (when multiple files match, the
+             first one in sorting order is chosen).
+
+             The default rotated log file suffix pattern is ^(-[[:digit:]]{8}|\.[01])(\.(gz|bz2))?$
+
+     -v      Output version information and exit.
+
+     -z      Always start reading from the beginning of the file, even if the state file says other-
+             wise.  This option is useful when reading from standard input.
+
+DETAILS
+     logwarn treats missing state files as if the log file were previously empty, and it never cre-
+     ates new state files for nonexistent log files.  The result is that when the -n flag is used,
+     logwarn correctly functions even if the log file doesn't come into existence until after the
+     first few runs.
+
+     Log file rotation is detected by comparing filesystem inode numbers, so logwarn may exhibit
+     incorrect behavior if (for example) an existing log file is replaced by a copy of itself.  In
+     this situation, use the -i flag to reinitialize the saved state.
+
+     Currently, the supported compression types for rotated files are gzip(1) and bzip2(1).  The
+     corresponding executables gunzip(1) and bunzip2(1) must be present on the user's $PATH.
+
+     When the -f flag is not specified, the state files in the state directory have names created by
+     taking the logfile from the command line and replacing ``/'' characters with ``_''.  Therefore,
+     referring to the same log file using different pathnames can result in inconsistent behavior.
+
+     The matching patterns are only applied to the first line of a multi-line log message.  However,
+     if the first line is a match, then entire log message including all continuation lines will be
+     output.
+
+     In order to avoid the race condition where logwarn reads a partially written line, if the last
+     line of logfile does not end in a newline character, it is not processed.
+
+     The maximum supported length for a single line is 100,000 characters; longer lines will be
+     split and treated as multiple lines.
+
+     If logwarn detects that a file's inode number has not changed but its size has decreased since
+     the previous invocation, it assumes that the file has been truncated in place and scans from
+     the beginning of the file.
+
+EXAMPLES
+     logwarn /var/log/warn
+
+          Show all syslog warnings since the previous invocation.
+
+     logwarn /var/log/warn | uniq -f 5 | logwarn -
+
+          Same as above, compressing repeated instances of the same message into a single line of
+          output.
+
+     logwarn -p /var/log/apache2/access_log '^.* [^ ]+" 5[0-9]{2}'
+
+          Show any Apache 5xx server errors since the previous invocation.
+
+     logwarn -p -m '^myprog: ' '!retrying' 'ERROR'
+
+          Show lines not containing `retrying' but containing `ERROR', as well as any subsequent
+          lines in a multi-line log message, assuming the `myprog: ' prefix marks the start of each
+          new log message.
+
+RETURN VALUES
+     logwarn exits with one of the following values:
+
+     0       No matching log messages were found.
+
+     1       One or more matching log messages were found.
+
+     2       An error occurred.
+
+SEE ALSO
+     Logwarn: Utility for finding interesting messages in log files, http://logwarn.googlecode.com/.
+
+AUTHOR
+     Archie L. Cobbs <archie@dellroad.org>
+
+BSD                                       January 31, 2011                                       BSD
+```

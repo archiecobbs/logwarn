@@ -1,0 +1,33 @@
+The **logwarn** Nagios plugin is called **check\_logwarn**.
+
+### Plugin Usage ###
+
+The command line usage is the same as for **logwarn(1)** itself. However, the output and exit codes are different, as required by the Nagios plugin standard.
+
+The **logwarn** Nagios plugin supports one additional command line parameter, `-F command`, which specifies a command through which the matching log messages should be piped prior to inclusion in the plugin output.
+
+The `command` can be any normal `bash(1)` shell command. The default command is `sed -e '1s/^\(.*\)$/Log errors: \1/g'` which prepends `Log errors: ` to the first line of output.
+
+For example, if you only want the plugin to output the first log message line (Nagios 2.x compatible behavior) truncated to 80 characters, you could use the command `sed -r 's/^(.{77}).+$/\1.../g'`.
+To only output the number of matching lines, you could use something like `awk '{ N++ } END { printf "%d line(s) logged\n", N }'`. Etc.
+
+Don't forget to pay attention to proper escaping for backslash and quote characters, etc.
+
+### Nagios Configuration ###
+
+The following settings are suggested when configuring a Nagios check to use **check\_logwarn**.
+
+Note: all of what follows assumes you are using normal **logwarn** state files to keep track of the position in the log files. When running in "stateless" mode, none of this applies.
+
+```
+   is_volatile            1
+   max_check_attempts     1
+   flap_detection_enabled 0
+   notification_options   w,u,c
+```
+
+Exaplanation:
+  * The `is_volatile` setting is because each time **check\_logwarn** runs, it updates its remembered position in the log file, and so automatically resets itself. See the [Nagios documentation](http://nagios.sourceforge.net/docs/3_0/volatileservices.html) for more info.
+  * Setting `max_check_attempts` to `1` is required because the next check after a failed check will always be successful (unless additional errors have been logged). This is because **check\_logwarn** automatically advances its position past the error each time. Therefore the consecutive failed check count will get reset back to zero and never attain a `max_check_attempts` value greater than one, causing no notification to be sent out by Nagios, even though an error was detected. In Nagios terminology, the error condition will never go from 'soft' to 'hard'.
+  * Turning off `flap_detection_enabled` is good because by virtue of its automatically resetting, logwarn "flaps" every time.
+  * Omitting the `r` (for recovery) option from `notification_options` is appropriate because "recovery" for **check\_logwarn** is not meaningful: it always recovers automatically.
