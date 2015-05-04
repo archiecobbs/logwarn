@@ -5,6 +5,7 @@ Makefile.in
 TAGS
 aclocal.m4
 autom4te.cache
+check_logwarn
 config.h
 config.h.in
 config.log
