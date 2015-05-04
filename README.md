@@ -8,6 +8,6 @@ Each log message is compared against each pattern in the order given.  If the lo
 
 **Logwarn** is written in C for efficient execution.
 
-A [Nagios](http://www.nagios.org/) plugin is also included: see the [NagiosPlugin](NagiosPlugin.md) wiki page for more info.
+A [Nagios](http://www.nagios.org/) plugin is also included: see the [NagiosPlugin](https://github.com/archiecobbs/logwarn/wiki/NagiosPlugin) wiki page for more info.
 
-You can view the [ManPage](ManPage.md) online.
+You can view the [ManPage](https://github.com/archiecobbs/logwarn/wiki/ManPage) online.
