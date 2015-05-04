@@ -36,10 +36,10 @@ EXTRA_DIST=		CHANGES
 
 logwarn_SOURCES=	main.c \
 			state.c \
-			svnrev.c
+			gitrev.c
 
-svnrev.c:
-			printf 'const char logwarn_svnrev[] = "%s";\n' `svnversion -n` > svnrev.c
+gitrev.c:
+			printf 'const char *const logwarn_version = "%s";\n' "`git describe`" > gitrev.c
 
 .PHONY:			tests
 tests:			logwarn

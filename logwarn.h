@@ -36,7 +36,7 @@ struct scan_state {
 #define EXIT_ERROR          2
 
 // Global variables
-extern const char logwarn_svnrev[];
+extern const char *const logwarn_version;
 
 // Global functions
 extern int  load_state(const char *state_file, struct scan_state *state);

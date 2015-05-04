@@ -15,7 +15,7 @@ rm -rf autom4te*.cache scripts aclocal.m4 configure config.log config.status .de
 rm -f config.h.in config.h.in~ config.h
 rm -rf scripts
 find . \( -name Makefile -o -name Makefile.in \) -print0 | xargs -0 rm -f
-rm -f *.o logwarn logwarn.1 logwarn-*.tar.gz logwarn.spec svnrev.c check_logwarn
+rm -f *.o logwarn logwarn.1 logwarn-*.tar.gz logwarn.spec gitrev.c check_logwarn
 rm -rf a.out.* tags
 if [ "${1}" = '-C' ]; then
     exit 0

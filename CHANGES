@@ -3,6 +3,7 @@ Version Next
 
     - Added note to man page that the default behavior is to match
     - Fix substitution for @BASH_SHELL@ in check_logwarn script
+    - Moved project hosing from Google code to GitHub
 
 Version 1.0.11 (r115) Released January 12, 2014
 

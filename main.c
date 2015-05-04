@@ -562,7 +562,7 @@ usage(void)
 static void
 version(void)
 {
-    fprintf(stderr, "%s version %s (r%s)\n", PACKAGE_TARNAME, PACKAGE_VERSION, logwarn_svnrev);
+    fprintf(stderr, "%s version %s (%s)\n", PACKAGE, VERSION, logwarn_version);
     fprintf(stderr, "Copyright (C) 2010-2013 Archie L. Cobbs\n");
     fprintf(stderr, "This is free software; see the source for copying conditions.  There is NO\n");
     fprintf(stderr, "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
