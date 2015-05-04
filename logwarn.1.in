@@ -73,7 +73,7 @@ and
 flags below).
 By default,
 .Nm
-interprets a missing state file as if the file were previously empty,
+interprets a missing state file as if the log file were previously empty,
 resulting in a scan of its entire contents; this behavior can be changed with the
 .Fl a
 and
@@ -262,7 +262,7 @@ plus a suffix matching the rotated log file suffix pattern
 (when multiple files match, the first one in sorting order is chosen).
 .Pp
 The default rotated log file suffix pattern is
-.Pa ^(-[[:digit:]]{8}|\e\.[01])(\e\.(gz|bz2))?$
+.Pa ^(-[[:digit:]]{8}|\e\.[01])(\e\.(gz|xz|bz2))?$
 .It Fl v
 Output version information and exit.
 .It Fl z
@@ -287,13 +287,15 @@ In this situation, use the
 flag to reinitialize the saved state.
 .Pp
 Currently, the supported compression types for rotated files are
-.Xr gzip 1
+.Xr gzip 1 ,
+.Xr bzip2 1 ,
 and
-.Xr bzip2 1 .
+.Xr xz 1 .
 The corresponding executables
-.Xr gunzip 1
+.Xr gunzip 1 ,
+.Xr bunzip2 1 ,
 and
-.Xr bunzip2 1
+.Xr unxz 1
 must be present on the user's
 .Pa $PATH .
 .Pp
