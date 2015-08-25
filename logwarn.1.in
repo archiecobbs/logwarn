@@ -16,8 +16,6 @@
 .\" See the License for the specific language governing permissions and
 .\" limitations under the License.
 .\"
-.\" $Id$
-.\"
 .Dd January 31, 2011
 .Dt LOGWARN 1
 .Os
