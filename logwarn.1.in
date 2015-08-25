@@ -27,7 +27,7 @@
 .Sh SYNOPSIS
 .Nm logwarn
 .Bk -words
-.Op Fl achlnpqvz
+.Op Fl achlnpqRvz
 .Op Fl d Ar dir | Fl f Ar file
 .Op Fl m Ar firstpat
 .Op Fl r Ar sufpat
@@ -86,7 +86,9 @@ since the previous invocation, as long as the rotated file has a name equal to
 .Ar logfile
 followed by a suffix matching the rotated log file suffix pattern (see the
 .Fl r
-flag below).
+and
+.Fl R
+flags below).
 .Pp
 By default, each line in the log file is considered to be a separate log message.
 Log messages spanning multiple lines are supported with the use of the
@@ -258,11 +260,16 @@ When
 detects that a log file has been rotated, it searches for the rotated log file by finding
 files in the same directory that have the same name as
 .Ar logfile
-plus a suffix matching the rotated log file suffix pattern
-(when multiple files match, the first one in sorting order is chosen).
+plus a suffix matching the rotated log file suffix pattern.
 .Pp
 The default rotated log file suffix pattern is
 .Pa ^(-[[:digit:]]{8}|\e\.[01])(\e\.(gz|xz|bz2))?$
+.It Fl R
+When multiple files match the rotated log file suffix pattern,
+norally the first one in sorting order is chosen.
+When this flag is given, the last one is chosen instead.
+.Pp
+This option is appropriate when the suffix is formatted as a timestamp.
 .It Fl v
 Output version information and exit.
 .It Fl z

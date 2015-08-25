@@ -61,6 +61,7 @@ static int          default_match = 1;
 static int          auto_initialize;
 static int          num_match_patterns;
 static int          read_from_beginning;
+static int          match_last_rotated;
 static int          quiet;
 static int          any_matches;
 static int          line_numbers;
@@ -92,7 +93,7 @@ main(int argc, char **argv)
     int i;
 
     // Parse command line
-    while ((i = getopt(argc, argv, "acd:f:hilL:m:M:N:npqr:tvz")) != -1) {
+    while ((i = getopt(argc, argv, "acd:f:hilL:m:M:N:npqRr:tvz")) != -1) {
         switch (i) {
         case 'a':
             auto_initialize = 1;
@@ -135,6 +136,9 @@ main(int argc, char **argv)
             break;
         case 'r':
             rotpat = optarg;
+            break;
+        case 'R':
+            match_last_rotated = 1;
             break;
         case 'h':
             usage();
@@ -286,6 +290,8 @@ main(int argc, char **argv)
             struct dirent *ent;
 
             for (ent = readdir(dir); ent != NULL; ent = readdir(dir)) {
+                int prefer;
+                int diff;
 
                 // Rotated file must have logfile name as prefix
                 if (strncmp(ent->d_name, bname, bnamelen) != 0)
@@ -299,8 +305,14 @@ main(int argc, char **argv)
                 if (regexec(&rot_pattern.regex, ent->d_name + bnamelen, 0, NULL, 0) != 0)
                     continue;
 
-                // It's a candidate. Pick the first one in sorting order.
-                if (rotated == NULL || strcmp(ent->d_name, rotated) < 0) {
+                // It's a candidate. Pick the first (or last) one in sorting order.
+                if (rotated == NULL)
+                    prefer = 1;
+                else {
+                    diff = strcmp(ent->d_name, rotated);
+                    prefer = match_last_rotated ? diff > 0 : diff < 0;
+                }
+                if (prefer) {
                     if ((rotated = realloc(rotated, strlen(ent->d_name) + 1)) == NULL) {
                         fprintf(stderr, "%s: %s: %s\n", PACKAGE, "realloc", strerror(errno));
                         exit(EXIT_ERROR);
