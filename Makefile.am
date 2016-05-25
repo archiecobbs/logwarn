@@ -30,7 +30,7 @@ plugindir=		$(prefix)/lib/nagios/plugins
 
 plugin_SCRIPTS=		check_logwarn
 
-EXTRA_DIST=		CHANGES
+EXTRA_DIST=		CHANGES README.md
 
 logwarn_SOURCES=	main.c \
 			state.c \
