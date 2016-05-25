@@ -1,5 +1,5 @@
 
-Version Next
+Version 1.0.12 Released May 24, 2016
 
     - Added note to man page that the default behavior is to match
     - Fix substitution for @BASH_SHELL@ in check_logwarn script
