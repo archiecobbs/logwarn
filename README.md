@@ -11,3 +11,5 @@ Each log message is compared against each pattern in the order given.  If the lo
 A [Nagios](http://www.nagios.org/) plugin is also included: see the [NagiosPlugin](https://github.com/archiecobbs/logwarn/wiki/NagiosPlugin) wiki page for more info.
 
 You can view the [ManPage](https://github.com/archiecobbs/logwarn/wiki/ManPage) online.
+
+Downloads available [here](https://github.com/archiecobbs/logwarn/wiki/Downloads).
