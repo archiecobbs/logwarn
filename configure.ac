@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-AC_INIT([logwarn Utility for finding interesting messages in log files], [1.0.12], [https://github.com/archiecobbs/logwarn/], [logwarn])
+AC_INIT([logwarn Utility for finding interesting messages in log files], [1.0.13], [https://github.com/archiecobbs/logwarn/], [logwarn])
 AC_CONFIG_AUX_DIR(scripts)
 AM_INIT_AUTOMAKE
 dnl AM_MAINTAINER_MODE
