@@ -350,9 +350,6 @@ main(int argc, char **argv)
     // Now scan the logfile itself
     scan_file(logfile, &state);
 
-    // Save state
-    save_state(state_file, logfile, &state);
-
     // Done
     exit(any_matches ? EXIT_MATCHES : EXIT_OK);
 }
@@ -448,19 +445,15 @@ scan_file(const char *logfile, struct scan_state *state)
         }
 
         // End of file?
-        if (len == 0 || (len < MAX_LINE_LENGTH - 1 && !newline)) {
-            save_state(state_file, logfile, state);
+        if (len == 0 || (len < MAX_LINE_LENGTH - 1 && !newline))
             break;
-        }
 
         // Is this a new log entry or a continuation line?
         continuation = log_pattern.string != NULL && regexec(&log_pattern.regex, line, 0, NULL, 0) != 0;
 
         // If this is not a continuation, check if we have reached our limit on the number of errors processed
-        if (!continuation && error_count >= max_errors_processed) {
-            save_state(state_file, logfile, state);
+        if (!continuation && error_count >= max_errors_processed)
             break;
-        }
 
         // Bump position and number of lines read
         state->pos += len;
@@ -511,6 +504,9 @@ scan_file(const char *logfile, struct scan_state *state)
             line_count++;
         }
     }
+
+    // Save updated state
+    save_state(state_file, logfile, state);
 
     // Free buffer
     free(line);
