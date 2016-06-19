@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "logwarn.h"
@@ -48,6 +49,7 @@ struct repat {
     const char      *string;
     regex_t         regex;
     unsigned char   negate;
+    struct repeat   *repeat;
 };
 
 // Global variables
@@ -88,7 +90,16 @@ main(int argc, char **argv)
     int ignore_nonexistent = 0;
     int eflags = 0;
     int initialize = 0;
+    int envset;
     int i;
+
+    // Initialize state
+    memset(&state, 0, sizeof(state));
+    state.line = 1;
+
+    // Make getopt() stop at the first non-flag argument
+    if ((envset = (getenv("POSIXLY_CORRECT") == NULL)))
+        setenv("POSIXLY_CORRECT", "", 1);
 
     // Parse command line
     while ((i = getopt(argc, argv, "acd:f:hilL:m:M:N:npqRr:tvz")) != -1) {
@@ -165,6 +176,8 @@ main(int argc, char **argv)
             exit(EXIT_ERROR);
         }
     }
+    if (envset)
+        unsetenv("POSIXLY_CORRECT");
     if (mpat != NULL)
         parse_pattern(&log_pattern, mpat, eflags);
     argv += optind;
@@ -185,19 +198,56 @@ main(int argc, char **argv)
             exit(EXIT_ERROR);
         }
         if (num_match_patterns > 0) {
-            if ((match_patterns = malloc(num_match_patterns * sizeof(*match_patterns))) == NULL) {
+            if ((match_patterns = malloc(num_match_patterns * sizeof(*match_patterns))) == NULL
+              || (state.repeats = malloc(num_match_patterns * sizeof(*state.repeats))) == NULL) {
                 fprintf(stderr, "%s: %s: %s\n", PACKAGE, "malloc", strerror(errno));
                 exit(EXIT_ERROR);
             }
             memset(match_patterns, 0, num_match_patterns * sizeof(*match_patterns));
+            memset(state.repeats, 0, num_match_patterns * sizeof(*state.repeats));
             for (i = 0; i < num_match_patterns; i++) {
                 struct repat *const pat = &match_patterns[i];
-                const char *patstr = argv[i];
+                char *patstr = argv[i];
 
+                // Add new repeat?
+                if (strcmp(patstr, "-T") == 0) {
+                    struct repeat *const repeat = &state.repeats[state.num_repeats++];
+
+                    if (i > num_match_patterns - 3 || sscanf(argv[++i], "%u/%u", &repeat->num, &repeat->secs) != 2) {
+                        usage();
+                        exit(EXIT_ERROR);
+                    }
+                    if (repeat->num == 0) {
+                        fprintf(stderr, "%s: invalid zero repeat count in \"-T %s\"", PACKAGE, argv[i]);
+                        exit(EXIT_ERROR);
+                    }
+                    if ((repeat->occurrences = malloc(repeat->num * sizeof(repeat->occurrences))) == NULL) {
+                        fprintf(stderr, "%s: %s: %s\n", PACKAGE, "malloc", strerror(errno));
+                        exit(EXIT_ERROR);
+                    }
+                    memset(repeat->occurrences, 0, repeat->num * sizeof(*repeat->occurrences));
+                    patstr = argv[++i];
+                }
+
+                // Check for negation
                 if (*patstr == '!') {
                     patstr++;
                     pat->negate = 1;
                 }
+
+                // Add (positive) pattern to the current repeat, if any
+                if (*patstr != '!' && state.num_repeats > 0) {
+                    struct repeat *const current_repeat = &state.repeats[state.num_repeats - 1];
+                    unsigned int hash = 0;
+                    const char *s;
+
+                    for (s = patstr; *s != '\0'; s++)
+                        hash = hash * 37 + (unsigned char)*s;
+                    current_repeat->hash ^= hash;
+                    pat->repeat = current_repeat;
+                }
+
+                // Parse pattern
                 parse_pattern(pat, patstr, eflags);
             }
         }
@@ -221,10 +271,6 @@ main(int argc, char **argv)
 
     // Parse rotated file pattern
     parse_pattern(&rot_pattern, rotpat, 0);
-
-    // Initialize state
-    memset(&state, 0, sizeof(state));
-    state.line = 1;
 
     // Check if logfile exists
     if (logfile != NULL && stat(logfile, &sb) == -1) {
@@ -466,8 +512,40 @@ scan_file(const char *logfile, struct scan_state *state)
             // Determine if this line matches
             for (i = 0; i < num_match_patterns; i++) {
                 const struct repat *const pat = &match_patterns[i];
+                struct repeat *const repeat = pat->repeat;
 
                 if (regexec(&pat->regex, line, 0, NULL, 0) == 0) {
+
+                    // Check for repeat suppression
+                    if (repeat != NULL) {
+                        time_t now;
+                        int count;
+
+                        // Update timestamps by adding the current timestamp to the front of the array
+                        time(&now);
+                        memmove(repeat->occurrences + 1, repeat->occurrences, (repeat->num - 1) * sizeof(*repeat->occurrences));
+                        repeat->occurrences[0] = (unsigned long)now;
+
+                        // Check whether the repeat threshold has been exceeded
+                        for (count = 0; count < repeat->num && repeat->occurrences[count] != 0; count++) {
+                            const unsigned int age = repeat->occurrences[0] - repeat->occurrences[count];
+
+                            if (age > repeat->secs)
+                                break;
+                        }
+
+                        // If not, treat like a non-matching line
+                        if (count < repeat->num) {
+                            matches = 0;
+                            break;
+                        }
+
+                        // If so, reset occurrence history for this pattern group
+                        memset(repeat->occurrences, 0, repeat->num * sizeof(*repeat->occurrences));
+                        break;
+                    }
+
+                    // No repeat suppression
                     matches = pat->negate ? 0 : 1;
                     break;
                 }
@@ -543,7 +621,7 @@ static void
 usage(void)
 {
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "  logwarn [-d dir | -f file] [-m firstpat] [-r sufpat] [-L maxlines] [-M maxprint] [-N maxerrors] [-achlnqpvz] logfile [!]pattern ...\n");
+    fprintf(stderr, "  logwarn [-d dir | -f file] [-m firstpat] [-r sufpat] [-L maxlines] [-M maxprint] [-N maxerrors] [-achlnqpvz] logfile [-T num/secs] [!]pattern ...\n");
     fprintf(stderr, "  logwarn [-d dir | -f file] -i logfile\n");
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "  -a    Auto-init: force `-i' if no state file exists\n");
@@ -560,6 +638,7 @@ usage(void)
     fprintf(stderr, "  -n    A nonexistent log file is not an error; treat as empty\n");
     fprintf(stderr, "  -q    Don't output the matched log messages\n");
     fprintf(stderr, "  -r    Specify rotated file suffix pattern; default \"%s\"\n", DEFAULT_ROTPAT);
+    fprintf(stderr, "  -T    Suppress until `num' occurrences within `secs' seconds");
     fprintf(stderr, "  -v    Output version information and exit\n");
     fprintf(stderr, "  -z    Always read from the beginning of the input\n");
     fprintf(stderr, "A logfile of `-' means read from standard input (typically used with `-z')\n");
@@ -569,7 +648,7 @@ static void
 version(void)
 {
     fprintf(stderr, "%s version %s (%s)\n", PACKAGE, VERSION, logwarn_version);
-    fprintf(stderr, "Copyright (C) 2010-2013 Archie L. Cobbs\n");
+    fprintf(stderr, "Copyright (C) 2010-2016 Archie L. Cobbs\n");
     fprintf(stderr, "This is free software; see the source for copying conditions.  There is NO\n");
     fprintf(stderr, "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
 }

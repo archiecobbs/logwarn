@@ -1,4 +1,8 @@
 
+Version Next
+
+    - Added `-T num/secs' for frequency filtering
+
 Version 1.0.12 Released May 24, 2016
 
     - Added note to man page that the default behavior is to match

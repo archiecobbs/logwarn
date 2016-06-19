@@ -33,6 +33,7 @@
 .Op Fl M Ar maxprint
 .Op Fl N Ar maxerrors
 .Ar logfile
+.Op Fl T Ar num/secs
 .Ar [!]pattern ...
 .Ek
 .Pp
@@ -268,6 +269,38 @@ norally the first one in sorting order is chosen.
 When this flag is given, the last one is chosen instead.
 .Pp
 This option is appropriate when the suffix is formatted as a timestamp.
+.It Fl T
+Suppress output until
+.Ar num
+matching lines appear within a
+.Ar secs
+second interval.
+.Pp
+This flag comes after the
+.Ar logfile .
+Each time it occurs, it applies to all subsequent patterns, or up until the next occurrence.
+Use
+.Fl T Ar 1/0
+to revert to normal behavior, in which every matching occurrence is reported.
+.Pp
+The affected patterns are treated as a single group for counting purposes, i.e.,
+a single counter tracks lines matching any of the patterns.
+When the last of
+.Ar num
+matching lines is seen in a
+.Ar secs
+second window, it is printed, and the associated tracking is reset, so at least another
+.Ar num
+lines must be seen before another match is printed.
+.Pp
+Note that the calculated timing of occurrences is whenever
+.Nm
+reads the file.
+Therefore
+.Nm
+should be invoked more frequently than your smallest
+.Ar secs
+time interval, to provide the required time resolution.
 .It Fl v
 Output version information and exit.
 .It Fl z
@@ -345,6 +378,17 @@ Show any Apache 5xx server errors since the previous invocation.
 .Pp
 Show lines not containing `retrying' but containing `ERROR', as well as any subsequent lines in a multi-line log message,
 assuming the `myprog: ' prefix marks the start of each new log message.
+For example:
+.It logwarn /var/log/warn -T 3/60 pat1 -T 10/300 pat2 pat3
+.Pp
+Match three or more occurrences of
+.Ar pat1
+within a one minute interval,
+or ten or more occurrences of either
+.Ar pat2
+or
+.Ar pat3
+within a five minute interval.
 .El
 .Sh RETURN VALUES
 .Nm

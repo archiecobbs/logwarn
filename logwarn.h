@@ -20,12 +20,22 @@
 // Maximum line length
 #define MAX_LINE_LENGTH     100000
 
+// Pattern repeat state
+struct repeat {
+    unsigned int    hash;           // xor of hashes of pattern string(s)
+    unsigned int    num;            // number required in interval
+    unsigned int    secs;           // interval duration in seconds
+    unsigned long   *occurrences;   // timestamps of up to `num' occurrences, most recent first
+};
+
 // Log scan state
 struct scan_state {
     ino_t           inode;          // file inode number
     unsigned long   line;           // # lines read + 1
     long            pos;            // seek position in file
     unsigned char   matching;       // within matching entry
+    unsigned int    num_repeats;    // number of repeats
+    struct repeat   *repeats;       // repeat state
 };
 
 // Exit values
@@ -37,9 +47,11 @@ struct scan_state {
 extern const char *const logwarn_version;
 
 // Global functions
+extern void reset_state(struct scan_state *state);
 extern int  load_state(const char *state_file, struct scan_state *state);
 extern void save_state(const char *state_file, const char *logfile, const struct scan_state *state);
 extern void dump_state(FILE *fp, const char *logfile, const struct scan_state *state);
 extern void init_state_from_logfile(const char *logfile, struct scan_state *state);
 extern void state_file_name(const char *state_dir, const char *logfile, char *buf, size_t max);
+extern struct repeat *find_repeat(struct scan_state *state, unsigned int hash);
 

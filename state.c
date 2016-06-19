@@ -37,6 +37,8 @@
 #define LINENUM_NAME        "LINENUM"
 #define POSITION_NAME       "POSITION"
 #define MATCHING_NAME       "MATCHING"
+#define REPEAT_PREFIX       "REPEAT_OCCURRENCES_"
+#define REPEAT_PREFIX_LEN   (sizeof(REPEAT_PREFIX) - 1)
 #define STDIN_LOGFILE_NAME  "_stdin"
 
 int
@@ -46,7 +48,7 @@ load_state(const char *state_file, struct scan_state *state)
     struct stat sb;
     FILE *fp;
 
-    memset(state, 0, sizeof(*state));
+    reset_state(state);
     state->line = 1;
     if (stat(state_file, &sb) == -1 || S_ISDIR(sb.st_mode))
         return -1;
@@ -56,7 +58,7 @@ load_state(const char *state_file, struct scan_state *state)
         const char *s = buf;
         unsigned long value;
         const char *fname;
-        const char *fvalue;
+        char *fvalue;
         char *eptr;
         char *t;
 
@@ -78,11 +80,30 @@ load_state(const char *state_file, struct scan_state *state)
             continue;
         *t = '\0';
 
+        // Handle repeat lines
+        if (strncmp(fname, REPEAT_PREFIX, REPEAT_PREFIX_LEN) == 0) {
+            struct repeat *repeat;
+            unsigned int hash;
+            char *saveptr;
+            char *token;
+            int i = 0;
+
+            if (sscanf(fname + REPEAT_PREFIX_LEN, "%x", &hash) != 1)
+                continue;
+            if ((repeat = find_repeat(state, hash)) == NULL)
+                continue;
+            for (token = strtok_r(fvalue, " ", &saveptr); token != NULL && i < repeat->num; token = strtok_r(NULL, " ", &saveptr)) {
+                if (sscanf(token, "%lu", &repeat->occurrences[i++]) != 1)
+                    break;
+            }
+            continue;
+        }
+
         // Handle "false" and "true"
         if (strcmp(fvalue, "false") == 0)
-            fvalue = "0";
+            strcpy(fvalue, "0");
         else if (strcmp(fvalue, "true") == 0)
-            fvalue = "1";
+            strcpy(fvalue, "1");
 
         // Decode numerical value
         if (((value = strtoul(fvalue, &eptr, 10)) == ULONG_MAX && errno == ERANGE) || *eptr != '\0') {
@@ -102,6 +123,33 @@ load_state(const char *state_file, struct scan_state *state)
     }
     (void)fclose(fp);
     return 0;
+}
+
+struct repeat *
+find_repeat(struct scan_state *state, unsigned int hash) {
+    int i;
+
+    for (i = 0; i < state->num_repeats; i++) {
+        struct repeat *const repeat = &state->repeats[i];
+
+        if (hash == repeat->hash)
+            return repeat;
+    }
+    return NULL;
+}
+
+void
+reset_state(struct scan_state *state)
+{
+    unsigned int num_repeats_save;
+    struct repeat *repeats_save;
+
+    // Reset state
+    num_repeats_save = state->num_repeats;
+    repeats_save = state->repeats;
+    memset(state, 0, sizeof(*state));
+    state->num_repeats = num_repeats_save;
+    state->repeats = repeats_save;
 }
 
 void
@@ -124,6 +172,7 @@ void
 dump_state(FILE *fp, const char *logfile, const struct scan_state *state)
 {
     struct scan_state stdin_state;
+    int i;
 
     if (logfile == NULL) {
         logfile = STDIN_LOGFILE_NAME;
@@ -136,6 +185,20 @@ dump_state(FILE *fp, const char *logfile, const struct scan_state *state)
     fprintf(fp, "%s=\"%lu\"\n", LINENUM_NAME, state->line);
     fprintf(fp, "%s=\"%lu\"\n", POSITION_NAME, state->pos);
     fprintf(fp, "%s=\"%s\"\n", MATCHING_NAME, state->matching ? "true" : "false");
+    for (i = 0; i < state->num_repeats; i++) {
+        const struct repeat *repeat = &state->repeats[i];
+        int j;
+
+        if (repeat->occurrences[0] == 0)
+            continue;
+        fprintf(fp, "%s%08x=\"", REPEAT_PREFIX, repeat->hash);
+        for (j = 0; j < repeat->num && repeat->occurrences[j] != 0; j++) {
+            if (j > 0)
+                fputc(' ', fp);
+            fprintf(fp, "%lu", (unsigned long)repeat->occurrences[j]);
+        }
+        fprintf(fp, "\"\n");
+    }
 }
 
 void
@@ -145,7 +208,8 @@ init_state_from_logfile(const char *logfile, struct scan_state *state)
     FILE *fp;
     int ch;
 
-    memset(state, 0, sizeof(*state));
+    // Read state file
+    reset_state(state);
     state->line = 1;
     if (logfile == NULL)
         return;
