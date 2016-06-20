@@ -1,4 +1,8 @@
 
+Version Next
+
+    - Fix bug when `-T' is followed by a negated pattern
+
 Version 1.0.13 Released June 19, 2016
 
     - Added `-T num/secs' for frequency filtering

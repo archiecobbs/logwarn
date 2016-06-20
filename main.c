@@ -236,7 +236,7 @@ main(int argc, char **argv)
                 }
 
                 // Add (positive) pattern to the current repeat, if any
-                if (*patstr != '!' && state.num_repeats > 0) {
+                if (!pat->negate && state.num_repeats > 0) {
                     struct repeat *const current_repeat = &state.repeats[state.num_repeats - 1];
                     unsigned int hash = 0;
                     const char *s;
