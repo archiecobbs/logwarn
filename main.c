@@ -542,7 +542,6 @@ scan_file(const char *logfile, struct scan_state *state)
 
                         // If so, reset occurrence history for this pattern group
                         memset(repeat->occurrences, 0, repeat->num * sizeof(*repeat->occurrences));
-                        break;
                     }
 
                     // No repeat suppression

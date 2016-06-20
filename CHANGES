@@ -1,7 +1,8 @@
 
 Version Next
 
-    - Fix bug when `-T' is followed by a negated pattern
+    - Fix bug where `-T' suppressed everything when used with `-p'
+    - Fix bug where `-T' would also count negative patterns
 
 Version 1.0.13 Released June 19, 2016
 
