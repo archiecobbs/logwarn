@@ -1,8 +1,9 @@
 
-Version Next
+Version 1.0.14 Released June 24, 2016
 
     - Fix bug where `-T' suppressed everything when used with `-p'
     - Fix bug where `-T' would also count negative patterns
+    - Fix segfault parsing `-T' in certain cases
 
 Version 1.0.13 Released June 19, 2016
 

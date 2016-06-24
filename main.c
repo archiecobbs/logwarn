@@ -187,69 +187,77 @@ main(int argc, char **argv)
         usage();
         exit(EXIT_ERROR);
     default:
+
+        // Get log file
         logfile = argv[0];
         if (strcmp(logfile, "-") == 0)
             logfile = NULL;
         argv++;
         argc--;
-        num_match_patterns = argc;
-        if (initialize && num_match_patterns > 0) {
-            usage();
-            exit(EXIT_ERROR);
-        }
-        if (num_match_patterns > 0) {
-            if ((match_patterns = malloc(num_match_patterns * sizeof(*match_patterns))) == NULL
-              || (state.repeats = malloc(num_match_patterns * sizeof(*state.repeats))) == NULL) {
-                fprintf(stderr, "%s: %s: %s\n", PACKAGE, "malloc", strerror(errno));
+
+        // If initializing, no patterns should be given
+        if (initialize) {
+            if (argc > 0) {
+                usage();
                 exit(EXIT_ERROR);
             }
-            memset(match_patterns, 0, num_match_patterns * sizeof(*match_patterns));
-            memset(state.repeats, 0, num_match_patterns * sizeof(*state.repeats));
-            for (i = 0; i < num_match_patterns; i++) {
-                struct repat *const pat = &match_patterns[i];
-                char *patstr = argv[i];
+            break;
+        }
 
-                // Add new repeat?
-                if (strcmp(patstr, "-T") == 0) {
-                    struct repeat *const repeat = &state.repeats[state.num_repeats++];
+        // Allocate pattern array
+        if ((match_patterns = malloc(argc * sizeof(*match_patterns))) == NULL
+          || (state.repeats = malloc(argc * sizeof(*state.repeats))) == NULL) {
+            fprintf(stderr, "%s: %s: %s\n", PACKAGE, "malloc", strerror(errno));
+            exit(EXIT_ERROR);
+        }
+        memset(match_patterns, 0, argc * sizeof(*match_patterns));
+        memset(state.repeats, 0, argc * sizeof(*state.repeats));
 
-                    if (i > num_match_patterns - 3 || sscanf(argv[++i], "%u/%u", &repeat->num, &repeat->secs) != 2) {
-                        usage();
-                        exit(EXIT_ERROR);
-                    }
-                    if (repeat->num == 0) {
-                        fprintf(stderr, "%s: invalid zero repeat count in \"-T %s\"", PACKAGE, argv[i]);
-                        exit(EXIT_ERROR);
-                    }
-                    if ((repeat->occurrences = malloc(repeat->num * sizeof(repeat->occurrences))) == NULL) {
-                        fprintf(stderr, "%s: %s: %s\n", PACKAGE, "malloc", strerror(errno));
-                        exit(EXIT_ERROR);
-                    }
-                    memset(repeat->occurrences, 0, repeat->num * sizeof(*repeat->occurrences));
-                    patstr = argv[++i];
+        // Parse patterns and `-T' flags
+        for (i = 0; i < argc; i++) {
+            struct repat *const pat = &match_patterns[num_match_patterns++];
+            char *patstr = argv[i];
+
+            // Add new repeat?
+            if (strcmp(patstr, "-T") == 0) {
+                struct repeat *const repeat = &state.repeats[state.num_repeats++];
+
+                if (i > argc - 3 || sscanf(argv[++i], "%u/%u", &repeat->num, &repeat->secs) != 2) {
+                    usage();
+                    exit(EXIT_ERROR);
                 }
-
-                // Check for negation
-                if (*patstr == '!') {
-                    patstr++;
-                    pat->negate = 1;
+                if (repeat->num == 0) {
+                    fprintf(stderr, "%s: invalid zero repeat count in \"-T %s\"", PACKAGE, argv[i]);
+                    exit(EXIT_ERROR);
                 }
-
-                // Add (positive) pattern to the current repeat, if any
-                if (!pat->negate && state.num_repeats > 0) {
-                    struct repeat *const current_repeat = &state.repeats[state.num_repeats - 1];
-                    unsigned int hash = 0;
-                    const char *s;
-
-                    for (s = patstr; *s != '\0'; s++)
-                        hash = hash * 37 + (unsigned char)*s;
-                    current_repeat->hash ^= hash;
-                    pat->repeat = current_repeat;
+                if ((repeat->occurrences = malloc(repeat->num * sizeof(repeat->occurrences))) == NULL) {
+                    fprintf(stderr, "%s: %s: %s\n", PACKAGE, "malloc", strerror(errno));
+                    exit(EXIT_ERROR);
                 }
-
-                // Parse pattern
-                parse_pattern(pat, patstr, eflags);
+                memset(repeat->occurrences, 0, repeat->num * sizeof(*repeat->occurrences));
+                patstr = argv[++i];
             }
+
+            // Check for negation
+            if (*patstr == '!') {
+                patstr++;
+                pat->negate = 1;
+            }
+
+            // Add (positive) pattern to the current repeat, if any
+            if (!pat->negate && state.num_repeats > 0) {
+                struct repeat *const current_repeat = &state.repeats[state.num_repeats - 1];
+                unsigned int hash = 0;
+                const char *s;
+
+                for (s = patstr; *s != '\0'; s++)
+                    hash = hash * 37 + (unsigned char)*s;
+                current_repeat->hash ^= hash;
+                pat->repeat = current_repeat;
+            }
+
+            // Parse pattern
+            parse_pattern(pat, patstr, eflags);
         }
         break;
     }
