@@ -632,7 +632,7 @@ usage(void)
     fprintf(stderr, "  logwarn [-d dir | -f file] -i logfile\n");
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "  -a    Auto-init: force `-i' if no state file exists\n");
-    fprintf(stderr, "  -c    Match patterns (and firstpat) case-insensitively");
+    fprintf(stderr, "  -c    Match patterns (and firstpat) case-insensitively\n");
     fprintf(stderr, "  -d    Specify state directory; default \"%s\"\n", DEFAULT_STATE_DIR);
     fprintf(stderr, "  -f    Specify state file directly\n");
     fprintf(stderr, "  -h    Output this help message and exit\n");
@@ -645,7 +645,7 @@ usage(void)
     fprintf(stderr, "  -n    A nonexistent log file is not an error; treat as empty\n");
     fprintf(stderr, "  -q    Don't output the matched log messages\n");
     fprintf(stderr, "  -r    Specify rotated file suffix pattern; default \"%s\"\n", DEFAULT_ROTPAT);
-    fprintf(stderr, "  -T    Suppress until `num' occurrences within `secs' seconds");
+    fprintf(stderr, "  -T    Suppress until `num' occurrences within `secs' seconds\n");
     fprintf(stderr, "  -v    Output version information and exit\n");
     fprintf(stderr, "  -z    Always read from the beginning of the input\n");
     fprintf(stderr, "A logfile of `-' means read from standard input (typically used with `-z')\n");
