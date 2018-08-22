@@ -123,22 +123,22 @@ main(int argc, char **argv)
             line_numbers = 1;
             break;
         case 'L':
-            max_lines_output = (int)strtoul(optarg, &eptr, 10);
-            if (*optarg == '\0' || *eptr != '\0' || max_lines_output < 0) {
+            max_lines_output = (unsigned int)strtoul(optarg, &eptr, 10);
+            if (*optarg == '\0' || *eptr != '\0') {
                 fprintf(stderr, "%s: invalid argument `%s' to `-%c' flag\n", PACKAGE, optarg, i);
                 exit(EXIT_ERROR);
             }
             break;
         case 'M':
-            max_errors_output = (int)strtoul(optarg, &eptr, 10);
-            if (*optarg == '\0' || *eptr != '\0' || max_errors_output < 0) {
+            max_errors_output = (unsigned int)strtoul(optarg, &eptr, 10);
+            if (*optarg == '\0' || *eptr != '\0') {
                 fprintf(stderr, "%s: invalid argument `%s' to `-%c' flag\n", PACKAGE, optarg, i);
                 exit(EXIT_ERROR);
             }
             break;
         case 'N':
-            max_errors_processed = (int)strtoul(optarg, &eptr, 10);
-            if (*optarg == '\0' || *eptr != '\0' || max_errors_processed <= 0) {
+            max_errors_processed = (unsigned int)strtoul(optarg, &eptr, 10);
+            if (*optarg == '\0' || *eptr != '\0' || max_errors_processed == 0) {
                 fprintf(stderr, "%s: invalid argument `%s' to `-%c' flag\n", PACKAGE, optarg, i);
                 exit(EXIT_ERROR);
             }
