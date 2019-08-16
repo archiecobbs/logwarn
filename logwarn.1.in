@@ -378,7 +378,6 @@ Show any Apache 5xx server errors since the previous invocation.
 .Pp
 Show lines not containing `retrying' but containing `ERROR', as well as any subsequent lines in a multi-line log message,
 assuming the `myprog: ' prefix marks the start of each new log message.
-For example:
 .It logwarn /var/log/warn -T 3/60 pat1 -T 10/300 pat2 pat3
 .Pp
 Match three or more occurrences of
