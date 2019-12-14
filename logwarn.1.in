@@ -186,6 +186,8 @@ is matched against the extended regular expression
 non-matching lines are considered continuations of the previous line.
 .Pp
 Multi-line mode will work correctly even if a message crosses a log file rotation boundary.
+.Pp
+Be careful with this flag: if you get the pattern wrong, it's possible nothing will ever match.
 .It Fl M
 Output at most
 .Ar maxprint
