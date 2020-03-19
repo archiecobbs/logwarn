@@ -220,9 +220,9 @@ main(int argc, char **argv)
 
             // Add new repeat?
             if (strcmp(patstr, "-T") == 0) {
-                struct repeat *const repeat = &state.repeats[state.num_repeats++];
+                struct repeat *const repeat = &state.repeats[state.num_repeats];
 
-                if (i > argc - 3 || sscanf(argv[++i], "%u/%u", &repeat->num, &repeat->secs) != 2) {
+                if (++i >= argc || sscanf(argv[i], "%u/%u", &repeat->num, &repeat->secs) != 2) {
                     usage();
                     exit(EXIT_ERROR);
                 }
@@ -230,12 +230,17 @@ main(int argc, char **argv)
                     fprintf(stderr, "%s: invalid zero repeat count in \"-T %s\"", PACKAGE, argv[i]);
                     exit(EXIT_ERROR);
                 }
+                if (++i >= argc) {  // ignore but allow "-T X/Y" as the last command line argument
+                    memset(repeat, 0, sizeof(*repeat));
+                    break;
+                }
+                state.num_repeats++;
                 if ((repeat->occurrences = malloc(repeat->num * sizeof(repeat->occurrences))) == NULL) {
                     fprintf(stderr, "%s: %s: %s\n", PACKAGE, "malloc", strerror(errno));
                     exit(EXIT_ERROR);
                 }
                 memset(repeat->occurrences, 0, repeat->num * sizeof(*repeat->occurrences));
-                patstr = argv[++i];
+                patstr = argv[i];
             }
 
             // Check for negation

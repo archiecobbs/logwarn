@@ -1,6 +1,7 @@
 Version Next
 
     - Added "-C" flag to Nagios plugin (issue #28).
+    - Allow "-T X/Y" flag as the final command line argument
 
 Version 1.0.14 Released June 24, 2016
 
