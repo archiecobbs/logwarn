@@ -1,3 +1,7 @@
+Version Next
+
+    - Store repeated timestamps more efficiently in state file
+
 Version 1.0.15 Released March 19, 2020
 
     - Added "-C" flag to Nagios plugin (issue #28).

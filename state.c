@@ -84,17 +84,34 @@ load_state(const char *state_file, struct scan_state *state)
         if (strncmp(fname, REPEAT_PREFIX, REPEAT_PREFIX_LEN) == 0) {
             struct repeat *repeat;
             unsigned int hash;
+            unsigned int rnum = 0;
             char *saveptr;
             char *token;
-            int i = 0;
 
             if (sscanf(fname + REPEAT_PREFIX_LEN, "%x", &hash) != 1)
                 continue;
             if ((repeat = find_repeat(state, hash)) == NULL)
                 continue;
-            for (token = strtok_r(fvalue, " ", &saveptr); token != NULL && i < repeat->num; token = strtok_r(NULL, " ", &saveptr)) {
-                if (sscanf(token, "%lu", &repeat->occurrences[i++]) != 1)
+            for (token = strtok_r(fvalue, " ", &saveptr); token != NULL; token = strtok_r(NULL, " ", &saveptr)) {
+                unsigned long timestamp;
+                unsigned int rcount;
+                char *slash;
+                int i;
+
+                // Parse optional timestamp repeat count
+                rcount = 1;
+                if ((slash = strchr(token, '/')) != NULL) {
+                    (void)sscanf(slash + 1, "%u", &rcount);
+                    *slash = '\0';
+                }
+
+                // Parse timestamp itself
+                if (sscanf(token, "%lu", &timestamp) != 1)
                     break;
+
+                // Add repeat occurrence(s)
+                for (i = 0; i < rcount && rnum < repeat->num; i++)
+                    repeat->occurrences[rnum++] = timestamp;
             }
             continue;
         }
@@ -187,15 +204,25 @@ dump_state(FILE *fp, const char *logfile, const struct scan_state *state)
     fprintf(fp, "%s=\"%s\"\n", MATCHING_NAME, state->matching ? "true" : "false");
     for (i = 0; i < state->num_repeats; i++) {
         const struct repeat *repeat = &state->repeats[i];
-        int j;
+        unsigned int rcount;
+        unsigned int rnum;
 
         if (repeat->occurrences[0] == 0)
             continue;
         fprintf(fp, "%s%08x=\"", REPEAT_PREFIX, repeat->hash);
-        for (j = 0; j < repeat->num && repeat->occurrences[j] != 0; j++) {
-            if (j > 0)
+        for (rnum = 0; rnum < repeat->num && repeat->occurrences[rnum] != 0; rnum += rcount) {
+
+            // Output the next timestamp
+            if (rnum > 0)
                 fputc(' ', fp);
-            fprintf(fp, "%lu", (unsigned long)repeat->occurrences[j]);
+            fprintf(fp, "%lu", (unsigned long)repeat->occurrences[rnum]);
+
+            // Compress repetitions of the same timestamp into one token
+            rcount = 1;
+            while (rnum + rcount < repeat->num && repeat->occurrences[rnum + rcount] == repeat->occurrences[rnum])
+                rcount++;
+            if (rcount > 1)
+                fprintf(fp, "/%u", rcount);
         }
         fprintf(fp, "\"\n");
     }
