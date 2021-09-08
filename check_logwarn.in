@@ -42,7 +42,8 @@ while [ "${#PLUGIN_ARGS[@]}" -gt 0 ]; do
     -h)
         "${LOGWARN}" -h 2>&1 \
           | sed -e 's/^  log/  check_log/g' \
-                -e 's/^\(.*\[-M msgs]\)\(.*\)$/\1 [-F command]\2/g' \
+                -e 's/^\(.*\[-L maxlines]\)\(.*\)$/\1 [-F command]\2/g' \
+                -e 's/^\(.*\[-ac\)\(.*\)$/\1C\2/g' \
                 -e '/^  -c/a\
 \  -C    Return Nagios level CRITICAL (instead of WARNING) if matches are found' \
                 -e '/^  -f/a\

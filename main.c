@@ -633,7 +633,8 @@ static void
 usage(void)
 {
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "  logwarn [-d dir | -f file] [-m firstpat] [-r sufpat] [-L maxlines] [-M maxprint] [-N maxerrors] [-achlnqpvz] logfile [-T num/secs] [!]pattern ...\n");
+    fprintf(stderr, "  logwarn [-d dir | -f file] [-m firstpat] [-r sufpat] [-L maxlines]\n");
+    fprintf(stderr, "          [-M maxprint] [-N maxerrors] [-achlnqpvz] logfile [-T num/secs] [!]pattern ...\n");
     fprintf(stderr, "  logwarn [-d dir | -f file] -i logfile\n");
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "  -a    Auto-init: force `-i' if no state file exists\n");
