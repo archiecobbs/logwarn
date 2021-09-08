@@ -30,7 +30,7 @@ if [ $? -ne 0 ]; then
 fi
 trap "${RM} -f ${STDOUT_FILE} ${STDERR_FILE}" 0 2 3 5 10 13 15
 
-# Scan args for '-h' or '-F'; all other stuff goes to logwarn(1)
+# Scan args for '-h', '-C', or '-F'; all other stuff goes to logwarn(1)
 declare -a LOGWARN_ARGS
 PLUGIN_ARGS=("$@")
 FILTER_COMMAND="${DEFAULT_FILTER}"
@@ -58,6 +58,7 @@ while [ "${#PLUGIN_ARGS[@]}" -gt 0 ]; do
         ;;
     -C)
         MATCH_RETURN="${STATE_CRITICAL}"
+        unset PLUGIN_ARGS[$FIRST_KEY]
         ;;
     --)
         LOGWARN_ARGS=( "${LOGWARN_ARGS[@]}" "${PLUGIN_ARGS[@]}" )
