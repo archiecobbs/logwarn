@@ -215,7 +215,7 @@ main(int argc, char **argv)
 
         // Parse patterns and `-T' flags
         for (i = 0; i < argc; i++) {
-            struct repat *const pat = &match_patterns[num_match_patterns++];
+            struct repat *const pat = &match_patterns[num_match_patterns];
             char *patstr = argv[i];
 
             // Add new repeat?
@@ -242,6 +242,9 @@ main(int argc, char **argv)
                 memset(repeat->occurrences, 0, repeat->num * sizeof(*repeat->occurrences));
                 patstr = argv[i];
             }
+
+            // It's a new pattern
+            num_match_patterns++;
 
             // Check for negation
             if (*patstr == '!') {

@@ -2,6 +2,7 @@ Version Next
 
     - Store repeated timestamps more efficiently in state file
     - Fixed infinite loop in Nagios plugin '-C' flag (issue #29)
+    - Fixed crash when "-T X/Y" flag was the last command line argument
 
 Version 1.0.15 Released March 19, 2020
 

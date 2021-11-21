@@ -12,3 +12,6 @@ verify_output /dev/null -f statefile logfile -T 4/10 'this is a test [0-9]' !'th
 cat logfile.2 >> logfile
 verify_output output -f statefile logfile -T 4/10 'this is a test [0-9]' !'this line does not match' -T 1/0
 
+# Another variant that caused a crash
+cat logfile.2 >> logfile
+verify_output output.2 -an -f statefile logfile -T 1/0
