@@ -244,7 +244,7 @@ init_state_from_logfile(const char *logfile, struct scan_state *state)
         fprintf(stderr, "%s: %s: %s\n", PACKAGE, logfile, strerror(errno));
         exit(EXIT_ERROR);
     }
-    if (S_ISDIR(sb.st_mode & S_IFMT)) {
+    if (S_ISDIR(sb.st_mode)) {
         fprintf(stderr, "%s: %s: %s\n", PACKAGE, logfile, strerror(EISDIR));
         exit(EXIT_ERROR);
     }
