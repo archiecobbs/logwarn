@@ -1,3 +1,7 @@
+Version Next
+
+    - Use fstat(2) instead of stat(2) to avoid tiny race condition
+
 Version 1.0.16 Released November 21, 2021
 
     - Store repeated timestamps more efficiently in state file

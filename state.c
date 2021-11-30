@@ -46,14 +46,24 @@ load_state(const char *state_file, struct scan_state *state)
 {
     char buf[1024];
     struct stat sb;
+    int errno_save;
     FILE *fp;
+    int fd;
 
     reset_state(state);
     state->line = 1;
-    if (stat(state_file, &sb) == -1 || S_ISDIR(sb.st_mode))
-        return -1;
     if ((fp = fopen(state_file, "r")) == NULL)
         return -1;
+    if ((fd = fileno(fp)) == -1) {
+        fprintf(stderr, "%s: %s: %s\n", PACKAGE, state_file, strerror(errno));
+        exit(EXIT_ERROR);
+    }
+    if (fstat(fd, &sb) == -1 || S_ISDIR(sb.st_mode)) {
+        errno_save = errno;
+        fclose(fp);
+        errno = errno_save;
+        return -1;
+    }
     while (fgets(buf, sizeof(buf), fp) != NULL) {
         const char *s = buf;
         unsigned long value;
@@ -233,6 +243,7 @@ init_state_from_logfile(const char *logfile, struct scan_state *state)
 {
     struct stat sb;
     FILE *fp;
+    int fd;
     int ch;
 
     // Read state file
@@ -240,7 +251,15 @@ init_state_from_logfile(const char *logfile, struct scan_state *state)
     state->line = 1;
     if (logfile == NULL)
         return;
-    if (stat(logfile, &sb) == -1) {
+    if ((fp = fopen(logfile, "r")) == NULL) {
+        fprintf(stderr, "%s: %s: %s\n", PACKAGE, logfile, strerror(errno));
+        exit(EXIT_ERROR);
+    }
+    if ((fd = fileno(fp)) == -1) {
+        fprintf(stderr, "%s: %s: %s\n", PACKAGE, logfile, strerror(errno));
+        exit(EXIT_ERROR);
+    }
+    if (fstat(fd, &sb) == -1) {
         fprintf(stderr, "%s: %s: %s\n", PACKAGE, logfile, strerror(errno));
         exit(EXIT_ERROR);
     }
@@ -249,10 +268,6 @@ init_state_from_logfile(const char *logfile, struct scan_state *state)
         exit(EXIT_ERROR);
     }
     state->inode = sb.st_ino;
-    if ((fp = fopen(logfile, "r")) == NULL) {
-        fprintf(stderr, "%s: %s: %s\n", PACKAGE, logfile, strerror(errno));
-        exit(EXIT_ERROR);
-    }
     while ((ch = getc(fp)) != EOF) {
         state->pos++;
         if (ch == '\n')
