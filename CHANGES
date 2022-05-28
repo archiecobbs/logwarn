@@ -1,4 +1,4 @@
-Version Next
+Version 1.0.17 Released May 28, 2022
 
     - Use fstat(2) instead of stat(2) to avoid tiny race condition
     - Fix bug when parsing consecutive "-T" flags
