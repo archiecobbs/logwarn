@@ -230,17 +230,13 @@ main(int argc, char **argv)
                     fprintf(stderr, "%s: invalid zero repeat count in \"-T %s\"", PACKAGE, argv[i]);
                     exit(EXIT_ERROR);
                 }
-                if (++i >= argc) {  // ignore but allow "-T X/Y" as the last command line argument
-                    memset(repeat, 0, sizeof(*repeat));
-                    break;
-                }
                 state.num_repeats++;
                 if ((repeat->occurrences = malloc(repeat->num * sizeof(repeat->occurrences))) == NULL) {
                     fprintf(stderr, "%s: %s: %s\n", PACKAGE, "malloc", strerror(errno));
                     exit(EXIT_ERROR);
                 }
                 memset(repeat->occurrences, 0, repeat->num * sizeof(*repeat->occurrences));
-                patstr = argv[i];
+                continue;
             }
 
             // It's a new pattern

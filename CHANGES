@@ -1,6 +1,7 @@
 Version Next
 
     - Use fstat(2) instead of stat(2) to avoid tiny race condition
+    - Fix bug when parsing consecutive "-T" flags
 
 Version 1.0.16 Released November 21, 2021
 
