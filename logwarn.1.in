@@ -63,6 +63,12 @@ before matching a negative
 .Ar !pattern ,
 or if none of the patterns match, then it's printed to standard output.
 .Pp
+By default, each line in the log file is considered to be a separate log message.
+Log messages spanning multiple lines are supported with the use of the
+.Fl m
+flag.
+.Pp
+.Sh Tracking Log File State
 .Nm
 keeps track of its current position in the log file between invocations, so each matching line is only ever output once.
 This information is kept in a separate `state file' (see the
@@ -70,6 +76,7 @@ This information is kept in a separate `state file' (see the
 and
 .Fl f
 flags below).
+.Pp
 By default,
 .Nm
 interprets a missing state file as if the log file were previously empty,
@@ -79,6 +86,7 @@ and
 .Fl i
 flags.
 .Pp
+.Sh Handling Rotated Log Files
 .Nm
 will find messages in log files that have been rotated (and possibly compressed)
 since the previous invocation, as long as the rotated file has a name equal to
@@ -89,11 +97,7 @@ and
 .Fl R
 flags below).
 .Pp
-By default, each line in the log file is considered to be a separate log message.
-Log messages spanning multiple lines are supported with the use of the
-.Fl m
-flag.
-.Pp
+.Sh Scanning Streams
 If
 .Ar logfile
 is `-' then standard input is scanned.
@@ -113,7 +117,7 @@ This flag turns on the
 intialization behavior in cases where
 .Ar logfile
 exists but the state file does not.
-Normally this is not what you want, but this can be helpful in cases where it's important to
+This can be helpful in cases where you want to ignore all previous messages or you want to
 avoid a flood of repeated log messages caused by state files somehow disappearing between invocations.
 .It Fl c
 Match each
