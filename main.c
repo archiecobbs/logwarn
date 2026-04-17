@@ -28,6 +28,7 @@
 #include <libgen.h>
 #include <limits.h>
 #include <regex.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,11 +46,22 @@
 #define DEFAULT_STATE_DIR       "/var/lib/logwarn"
 #endif
 
+#define XML_INDENT              "    "
+
 struct repat {
     const char      *string;
+    const char      *keyname;
     regex_t         regex;
     unsigned char   negate;
     struct repeat   *repeat;
+};
+
+struct xml_tag {
+    const char      *name;
+    int             depth;
+    int             empty;
+    int             parent;
+    struct xml_tag  *prev;
 };
 
 // Global variables
@@ -65,6 +77,11 @@ static int          match_last_rotated;
 static int          quiet;
 static int          any_matches;
 static int          line_numbers;
+static const char   *xml_encoding;
+static int          xml_groups;
+static int          xml_mode;
+static struct xml_tag *curr_xml;
+static int          max_regex_groups;
 static unsigned int error_count;
 static unsigned int line_count;
 static unsigned int max_errors_processed = UINT_MAX;
@@ -78,6 +95,17 @@ static void parse_pattern(struct repat *pat, const char *string, int eflags);
 static void version(void);
 static void usage(void);
 
+// XML functions
+static void open_xml_match(FILE *fp, const struct scan_state *state,
+    const regmatch_t *pmatch, const char *xml_keyname, const char *line);
+static void close_xml_match(FILE *fp);
+static void xml_encode_attr(FILE *fp, const char *name, const char *format, ...)
+    __attribute__ ((__format__ (__printf__, 3, 4)));
+static void xml_encode_text(FILE *fp, const char *text, size_t off, size_t len);
+static void open_xml_tag(FILE *fp, const char *name);
+static void close_xml_tag(FILE *fp);
+static void indent_xml(FILE *fp);
+
 int
 main(int argc, char **argv)
 {
@@ -86,6 +114,7 @@ main(int argc, char **argv)
     struct stat sb;
     const char *rotpat = DEFAULT_ROTPAT;
     const char *mpat = NULL;
+    const char *keyname = NULL;
     char *eptr;
     int ignore_nonexistent = 0;
     int eflags = 0;
@@ -102,7 +131,7 @@ main(int argc, char **argv)
         setenv("POSIXLY_CORRECT", "", 1);
 
     // Parse command line
-    while ((i = getopt(argc, argv, "acd:f:hilL:m:M:N:npqRr:tvz")) != -1) {
+    while ((i = getopt(argc, argv, "acd:e:f:ghilL:m:M:N:npqRr:tvxz")) != -1) {
         switch (i) {
         case 'a':
             auto_initialize = 1;
@@ -113,8 +142,14 @@ main(int argc, char **argv)
         case 'd':
             state_dir = optarg;
             break;
+        case 'e':
+            xml_encoding = optarg;
+            break;
         case 'f':
             state_file = optarg;
+            break;
+        case 'g':
+            xml_groups = 1;
             break;
         case 'm':
             mpat = optarg;
@@ -164,6 +199,9 @@ main(int argc, char **argv)
         case 'q':
             quiet = 1;
             break;
+        case 'x':
+            xml_mode = 1;
+            break;
         case 'z':
             read_from_beginning = 1;
             break;
@@ -178,6 +216,8 @@ main(int argc, char **argv)
     }
     if (envset)
         unsetenv("POSIXLY_CORRECT");
+    if (!xml_mode)
+        eflags |= REG_NOSUB;
     if (mpat != NULL)
         parse_pattern(&log_pattern, mpat, eflags);
     argv += optind;
@@ -213,10 +253,21 @@ main(int argc, char **argv)
         memset(match_patterns, 0, argc * sizeof(*match_patterns));
         memset(state.repeats, 0, argc * sizeof(*state.repeats));
 
-        // Parse patterns and `-T' flags
+        // Parse patterns, '-k' flags, and `-T' flags
         for (i = 0; i < argc; i++) {
             struct repat *const pat = &match_patterns[num_match_patterns];
             char *patstr = argv[i];
+
+            // Update keyname?
+            if (strcmp(patstr, "-k") == 0) {
+                if (++i >= argc) {
+                    usage();
+                    exit(EXIT_ERROR);
+                }
+                if (*(keyname = argv[i]) == '\0')           // an empty keyname resets to none
+                    keyname = NULL;
+                continue;
+            }
 
             // Add new repeat?
             if (strcmp(patstr, "-T") == 0) {
@@ -262,6 +313,22 @@ main(int argc, char **argv)
 
             // Parse pattern
             parse_pattern(pat, patstr, eflags);
+
+            // XML mode stuff
+            if (xml_mode) {
+                int num_parens;
+
+                // Save keyname
+                pat->keyname = keyname;
+
+                // Calculate an upper bound on the number of groups in any pattern
+                for (num_parens = 0; *patstr != '\0'; patstr++) {
+                    if (*patstr == '(')
+                        num_parens++;
+                }
+                if (num_parens > max_regex_groups)
+                    max_regex_groups = num_parens + 1;
+            }
         }
         break;
     }
@@ -416,6 +483,8 @@ static void
 scan_file(const char *logfile, struct scan_state *state)
 {
     unsigned char compressed = 0;
+    regmatch_t *pmatch = NULL;
+    int xml_match_open = 0;
     char cmdbuf[PATH_MAX];
     char *line = NULL;
     FILE *fp;
@@ -482,8 +551,26 @@ scan_file(const char *logfile, struct scan_state *state)
         exit(EXIT_ERROR);
     }
 
+    // Allocate regex group array in XML mode
+    if (xml_mode && (pmatch = malloc(max_regex_groups * sizeof(*pmatch))) == NULL) {
+        fprintf(stderr, "%s: %s: %s\n", PACKAGE, "malloc", strerror(errno));
+        exit(EXIT_ERROR);
+    }
+
+    // XML header
+    if (xml_mode && !quiet) {
+        printf("<?xml version=\"1.0\"");
+        if (xml_encoding != NULL)
+            xml_encode_attr(stdout, "encoding", "%s", xml_encoding);
+        printf("?>\n");
+        open_xml_tag(stdout, "logwarn");
+        if (logfile != NULL)
+            xml_encode_attr(stdout, "file", "%s", logfile);
+    }
+
     // Scan lines
     while (1) {
+        const char *xml_keyname = NULL;
         unsigned char continuation;
         int newline = 0;
         int len;
@@ -513,10 +600,6 @@ scan_file(const char *logfile, struct scan_state *state)
         if (!continuation && error_count >= max_errors_processed)
             break;
 
-        // Bump position and number of lines read
-        state->pos += len;
-        state->line++;
-
         // Does this line match? New log entries lines only.
         if (!continuation) {
             int matches = -1;
@@ -526,7 +609,8 @@ scan_file(const char *logfile, struct scan_state *state)
                 const struct repat *const pat = &match_patterns[i];
                 struct repeat *const repeat = pat->repeat;
 
-                if (regexec(&pat->regex, line, 0, NULL, 0) == 0) {
+                // If it matches, stop looking
+                if (regexec(&pat->regex, line, max_regex_groups, pmatch, 0) == 0) {
 
                     // Check for repeat suppression
                     if (repeat != NULL) {
@@ -558,13 +642,23 @@ scan_file(const char *logfile, struct scan_state *state)
 
                     // No repeat suppression
                     matches = pat->negate ? 0 : 1;
+
+                    // Remember keyname for later (XML mode)
+                    if (matches)
+                        xml_keyname = pat->keyname;
+
+                    // Stop looking
                     break;
                 }
             }
-            if (matches == -1)
-                matches = default_match;
 
-            // Update error count
+            // If no pattern matched, assume the default thing
+            if (matches == -1) {
+                matches = default_match;
+                xml_keyname = NULL;
+            }
+
+            // Update "error" count
             if (matches)
                 error_count++;
 
@@ -572,7 +666,7 @@ scan_file(const char *logfile, struct scan_state *state)
             state->matching = matches;
         }
 
-        // Reset line counter
+        // Reset line counter for the current match
         if (!continuation)
             line_count = 0;
 
@@ -582,16 +676,40 @@ scan_file(const char *logfile, struct scan_state *state)
             // Update flag
             any_matches = 1;
 
-            // Output line if appropriate
+            // Output match if appropriate
             if (!quiet && line_count < max_lines_output && error_count <= max_errors_output) {
-                if (line_numbers)
-                    printf("%ld:", state->line - 1);
-                printf("%s\n",line);
+                if (xml_mode) {
+                    if (!continuation) {
+                        if (xml_match_open)
+                            close_xml_match(stdout);
+                        open_xml_match(stdout, state, pmatch, xml_keyname, line);
+                        xml_match_open = 1;
+                    } else
+                        printf("\n");
+                    xml_encode_text(stdout, line, 0, strlen(line));
+                } else {
+                    if (line_numbers)
+                        printf("%ld:", state->line);
+                    printf("%s\n", line);
+                }
             }
 
             // Update line and error counters
             line_count++;
         }
+
+        // Bump position and number of lines read
+        state->pos += len;
+        state->line++;
+    }
+
+    // Close open XML stanza(s)
+    if (xml_mode && !quiet) {
+        if (xml_match_open) {
+            close_xml_match(stdout);        // close <match> element
+            xml_match_open = 0;
+        }
+        close_xml_tag(stdout);              // close <logwarn> element
     }
 
     // Save updated state
@@ -615,12 +733,171 @@ scan_file(const char *logfile, struct scan_state *state)
 }
 
 static void
+open_xml_match(FILE *fp, const struct scan_state *const state,
+    const regmatch_t *const pmatch, const char *const xml_keyname, const char *line)
+{
+    int group_number;
+
+    open_xml_tag(fp, "match");
+    xml_encode_attr(fp, "line", "%lu", state->line);
+    xml_encode_attr(fp, "pos", "%lu", state->pos);
+    if (xml_keyname != NULL)
+        xml_encode_attr(fp, "key", "%s", xml_keyname);
+    if (xml_groups) {
+        for (group_number = 1; group_number < max_regex_groups; group_number++) {
+            const regmatch_t *const group = &pmatch[group_number];
+            if (group->rm_so != -1 && group->rm_eo != -1) {
+                open_xml_tag(fp, "group");
+                xml_encode_attr(fp, "number", "%u", group_number);
+                xml_encode_text(fp, line, (size_t)group->rm_so, (size_t)(group->rm_eo - group->rm_so));
+                close_xml_tag(fp);
+            }
+        }
+    }
+    open_xml_tag(fp, "text");
+}
+
+static void
+close_xml_match(FILE *fp)
+{
+    close_xml_tag(fp);      // close <text> element
+    close_xml_tag(fp);      // close <match> element
+}
+
+static void
+open_xml_tag(FILE *fp, const char *name)
+{
+    struct xml_tag *const prev = curr_xml;
+    struct xml_tag *xml;
+    int depth;
+
+    if (prev != NULL) {
+        if (prev->empty) {
+            fprintf(fp, ">\n");
+            prev->empty = 0;
+        }
+        prev->parent = 1;
+        depth = prev->depth + 1;
+    } else
+        depth = 0;
+    if ((xml = malloc(sizeof(*xml))) == NULL) {
+        fprintf(stderr, "%s: %s: %s\n", PACKAGE, "malloc", strerror(errno));
+        exit(EXIT_ERROR);
+    }
+    memset(xml, 0, sizeof(*xml));
+    xml->name = name;
+    xml->prev = prev;
+    xml->depth = depth;
+    xml->empty = 1;
+    curr_xml = xml;
+    indent_xml(fp);
+    fprintf(fp, "<%s", name);
+}
+
+static void
+close_xml_tag(FILE *fp)
+{
+    struct xml_tag *const xml = curr_xml;
+
+    if (xml->empty)
+        fprintf(fp, "/>\n");
+    else if (!xml->parent)
+        fprintf(fp, "</%s>\n", xml->name);
+    else {
+        indent_xml(fp);
+        fprintf(fp, "</%s>\n", xml->name);
+    }
+    curr_xml = xml->prev;
+}
+
+static void
+indent_xml(FILE *fp)
+{
+    struct xml_tag *const xml = curr_xml;
+    int i;
+
+    for (i = 0; i < xml->depth; i++)
+        fprintf(fp, "%s", XML_INDENT);
+}
+
+static void
+xml_encode_attr(FILE *fp, const char *name, const char *format, ...)
+{
+    va_list args;
+    char *s;
+    char *t;
+
+    // Format string
+    va_start(args, format);
+    if (vasprintf(&s, format, args) == -1) {
+        fprintf(stderr, "%s: %s: %s\n", PACKAGE, "vasprintf", strerror(errno));
+        exit(EXIT_ERROR);
+    }
+    va_end(args);
+
+    // Output attribute
+    fprintf(fp, " %s=\"", name);
+    for (t = s; *t != '\0'; t++) {
+        const char ch = *t;
+        switch (ch) {
+        case '<':
+            fprintf(fp, "&lt;");
+            break;
+        case '>':
+            fprintf(fp, "&gt;");
+            break;
+        case '&':
+            fprintf(fp, "&amp;");
+            break;
+        case '"':
+            fprintf(fp, "&quot;");
+            break;
+        default:
+            fputc(ch, fp);
+            break;
+        }
+    }
+    fprintf(fp, "\"");
+
+    // Done
+    free(s);
+}
+
+static void
+xml_encode_text(FILE *fp, const char *text, size_t off, size_t len)
+{
+    struct xml_tag *const xml = curr_xml;
+
+    while (len-- > 0) {
+        const char ch = text[off++];
+        if (xml->empty) {
+            fprintf(fp, ">");
+            xml->empty = 0;
+        }
+        switch (ch) {
+        case '<':
+            fprintf(fp, "&lt;");
+            break;
+        case '>':
+            fprintf(fp, "&gt;");
+            break;
+        case '&':
+            fprintf(fp, "&amp;");
+            break;
+        default:
+            fputc(ch, fp);
+            break;
+        }
+    }
+}
+
+static void
 parse_pattern(struct repat *pat, const char *string, int eflags)
 {
     char ebuf[1024];
     int r;
 
-    if ((r = regcomp(&pat->regex, string, REG_EXTENDED|REG_NOSUB|eflags)) != 0) {
+    if ((r = regcomp(&pat->regex, string, REG_EXTENDED|eflags)) != 0) {
         regerror(r, &pat->regex, ebuf, sizeof(ebuf));
         fprintf(stderr, "%s: invalid regular expression \"%s\": %s", PACKAGE, string, ebuf);
         exit(EXIT_ERROR);
@@ -664,4 +941,3 @@ version(void)
     fprintf(stderr, "This is free software; see the source for copying conditions.  There is NO\n");
     fprintf(stderr, "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
 }
-

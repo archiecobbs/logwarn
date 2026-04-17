@@ -25,8 +25,9 @@
 .Sh SYNOPSIS
 .Nm logwarn
 .Bk -words
-.Op Fl achlnpqRvz
+.Op Fl acghlnpqRvxz
 .Op Fl d Ar dir | Fl f Ar file
+.Op Fl e Ar encoding
 .Op Fl m Ar firstpat
 .Op Fl r Ar sufpat
 .Op Fl L Ar maxlines
@@ -34,6 +35,7 @@
 .Op Fl N Ar maxerrors
 .Ar logfile
 .Op Fl T Ar num/secs
+.Op Fl k Ar keyname
 .Ar [!]pattern ...
 .Ek
 .Pp
@@ -46,8 +48,7 @@
 .Sh DESCRIPTION
 .Nm
 searches for interesting messages in log files, where ``interesting'' is defined by an
-user-supplied list of positive and negative extended regular expressions
-provided on the command line.
+user-supplied list of positive and negative extended regular expressions.
 A line that matches neither a positive nor a negative pattern is considered a match
 (use the
 .Fl p
@@ -108,6 +109,25 @@ transformations of the raw log input prior to matching.
 Typically the
 .Fl z
 flag is used in this scenario.
+.Sh XML Output
+.Nm
+can output its results as an XML 1.0 document.
+The relevant options are
+.Fl x ,
+.Fl e ,
+.Fl k ,
+and
+.Fl g .
+.Pp
+Note that XML is an inherently character-based document format, whereas
+.Nm
+doesn't bother to interpret the bytes it reads as characters in any particular character encoding;
+instead, it just passes them through.
+If the character encoding is anything other than UTF-8, the
+.Fl e
+flag should be used.
+In addition, control characters other than tab, CR, and LF are considered illegal in XML 1.0,
+so consider adding appropriate filtering if control characters may appear.
 .Sh OPTIONS
 .Bl -tag -width Ds
 .It Fl a
@@ -140,6 +160,16 @@ The default state directory is
 It is an error to use this flag and
 .Fl f
 at the same time.
+.It Fl e
+Specify a character encoding to include in the XML declaration when producing XML output.
+This flag exists because
+.Nm
+does not assume or require any particular character encoding of its input.
+.Pp
+This flag is ignored unless
+.Fl x
+is specified.
+If this flag is omitted, the XML declaration will not specify an encoding which, according to the specification, implies UTF-8.
 .It Fl f
 Specify the state file used to store state information between invocations.
 Each
@@ -152,6 +182,12 @@ To run in stateless mode, use
 It is an error to use this flag and
 .Fl d
 at the same time.
+.It Fl g
+Include substrings matching parenthesized regular expression groups in the XML output.
+.Pp
+This flag is ignored unless
+.Fl x
+is specified.
 .It Fl h
 Output help message and exit.
 .It Fl i
@@ -161,6 +197,21 @@ as `up to date'.
 This causes the next invocation to start its scan at the current
 (as of this invocation) end of
 .Ar logfile .
+.It Fl k
+Specify a name key to be included in the XML output.
+This flag comes after the
+.Ar logfile .
+Each time it occurs, it applies to all subsequent patterns, or up until the next occurrence.
+When any of those patterns match, the
+.Ar keyname
+will be included in the XML match as an attribute.
+Specifying an empty string for
+.Ar keyname
+resets back to no key.
+.Pp
+This flag is ignored unless
+.Fl x
+is specified.
 .It Fl L
 Produce at most
 .Ar maxlines
@@ -175,6 +226,8 @@ to zero has the same effect as
 .Fl q .
 .It Fl l
 Prefix each output line with the line number from the log file.
+.Pp
+This flag is ignored in XML mode.
 .It Fl m
 Enable multi-line support using
 .Ar firstpat
@@ -309,6 +362,30 @@ should be invoked more frequently than your smallest
 time interval, to provide the required time resolution.
 .It Fl v
 Output version information and exit.
+.It Fl x
+Output matches in XML, resulting in output that looks like this:
+.Bd -literal -offset xxx
+<?xml version="1.0"?>
+<logwarn file="/var/log/my.log">
+    <match line="7139" offset="2282477">
+        <text>2026-04-10 [thread-pool-1] ERROR: exception during transfer
+java.io.IOException: Connection reset by peer
+        at com.example.TranferTask.execute(TranferTask.java:87) ~[transfer-3.0.8.jar:?]
+        at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) [?:?]
+        at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) [?:?]
+        at java.base/java.lang.Thread.run(Thread.java:840) [?:?]</text>
+    </match>
+    <match line="7235" offset="2282583" key="connect-fail">
+        <group number="1">remote1.example.com</group>
+        <text>2026-04-10 [thread-pool-1] WARN : failed to connect to server remote1.example.com</text>
+    </match>
+</logwarn>
+.Ed
+.Pp
+The above example is shown as if this were in the command line:
+.Bd -literal -offset xxx
+-xg /var/log/my.log -k connect-fail "failed to connect to server (.*)$"
+.Ed
 .It Fl z
 Always start reading from the beginning of the file, even if the state file says otherwise.
 This option is useful when reading from standard input.

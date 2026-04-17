@@ -1,0 +1,20 @@
+#!/bin/bash
+
+. testutil.sh
+cd data0011
+
+# Check plain XML output
+reset_state_file statefile logfile
+verify_output output1.xml -p -f statefile -x -m ^START: logfile error
+
+# Check XML output with keys
+reset_state_file statefile logfile
+verify_output output2.xml -p -f statefile -x -m ^START: logfile -k err5 'error message #5' -k '' error
+
+# Check XML output with an explicit XML encoding specified
+reset_state_file statefile logfile
+verify_output output3.xml -p -f statefile -x -e 'utf-8' -m ^START: logfile error
+
+# Check XML output with regex groups
+reset_state_file statefile logfile
+verify_output output4.xml -p -f statefile -x -g -m ^START: logfile 'error (message) #([0-9]+)'

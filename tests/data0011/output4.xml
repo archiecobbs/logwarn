@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<logwarn file="logfile">
+    <match line="2" pos="24">
+        <group number="1">message</group>
+        <group number="2">2</group>
+        <text>START: error message #2</text>
+    </match>
+    <match line="6" pos="129">
+        <group number="1">message</group>
+        <group number="2">5</group>
+        <text>START: error message #5
+continuation of error message #5</text>
+    </match>
+    <match line="11" pos="271">
+        <group number="1">message</group>
+        <group number="2">8</group>
+        <text>START: error message #8</text>
+    </match>
+</logwarn>
